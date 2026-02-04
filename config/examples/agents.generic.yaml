@@ -1,0 +1,113 @@
+# =============================================================================
+# Claw Control - Generic Agent Configuration
+# =============================================================================
+#
+# A framework-agnostic configuration that works with any AI assistant.
+# Use this as a starting point and customize for your specific setup.
+#
+# This config uses neutral naming that works regardless of whether you're
+# using Claude, GPT, Llama, Mistral, or any other AI model.
+#
+# Usage:
+#   cp config/examples/agents.generic.yaml config/agents.yaml
+#   curl -X POST http://localhost:3001/api/config/reload
+# =============================================================================
+
+agents:
+  # Primary coordinator agent - manages workflow
+  - name: "Lead"
+    description: "Team lead - coordinates work and delegates to specialists"
+    role: "Coordinator"
+    avatar: "👑"
+    status: idle
+
+  # Code implementation agent
+  - name: "Developer"
+    description: "Software developer - writes and maintains code"
+    role: "Engineering"
+    avatar: "💻"
+    status: idle
+
+  # Operations and infrastructure agent
+  - name: "Operator"
+    description: "Operations - deployments, monitoring, infrastructure"
+    role: "Operations"
+    avatar: "🔧"
+    status: idle
+
+  # Research and documentation agent
+  - name: "Analyst"
+    description: "Research analyst - investigation, documentation, reports"
+    role: "Research"
+    avatar: "📊"
+    status: idle
+
+  # Quality and testing agent
+  - name: "Reviewer"
+    description: "Quality assurance - code review, testing, validation"
+    role: "QA"
+    avatar: "✅"
+    status: idle
+
+# =============================================================================
+# Configuration Reference
+# =============================================================================
+#
+# Required fields:
+#   name: string          # Display name shown on dashboard
+#
+# Optional fields:
+#   description: string   # What this agent does (shown in details)
+#   role: string          # Role/specialty label (default: "Agent")
+#   avatar: string        # Emoji or image URL (default: "🤖")
+#   status: string        # Initial status: idle|working|offline (default: "idle")
+#
+# =============================================================================
+# Avatar Options
+# =============================================================================
+#
+# Option 1: Emoji (simplest)
+#   avatar: "🤖"
+#   avatar: "👨‍💻"
+#   avatar: "🧠"
+#
+# Option 2: Image URL (custom branding)
+#   avatar: "https://cdn.example.com/avatars/lead.png"
+#
+# Option 3: Local path (self-hosted)
+#   avatar: "/avatars/lead.png"   # Served from frontend public folder
+#
+# =============================================================================
+# Scaling Your Team
+# =============================================================================
+#
+# Start small (3-4 agents) and add more as needed:
+#
+# For larger teams, consider role-based naming:
+#   - Lead, Backend-1, Backend-2, Frontend-1, DevOps, QA
+#
+# Or project-based agents:
+#   - API-Agent, UI-Agent, Data-Agent, Infra-Agent
+#
+# The key is clear responsibilities - each agent should have a distinct role.
+# =============================================================================
+# Integration Examples
+# =============================================================================
+#
+# Update agent status (any HTTP client):
+#   PUT /api/agents/:id
+#   Body: { "status": "working" }
+#
+# Post a message to the feed:
+#   POST /api/messages
+#   Body: { "agent_id": 1, "message": "Starting task..." }
+#
+# Create a new task:
+#   POST /api/tasks
+#   Body: { "title": "Fix bug #123", "status": "todo", "agent_id": 2 }
+#
+# Move task to next status:
+#   POST /api/tasks/:id/progress
+#
+# See README.md for full API documentation.
+# =============================================================================

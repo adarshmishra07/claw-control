@@ -1,0 +1,69 @@
+# =============================================================================
+# Claw Control - OpenAI/GPT Agent Configuration
+# =============================================================================
+#
+# Example setup for users working with ChatGPT, GPT-4, or other OpenAI-based
+# AI assistants. These agents use a corporate/professional naming scheme
+# that works well with OpenAI's assistant paradigm.
+#
+# Usage:
+#   cp config/examples/agents.openai.yaml config/agents.yaml
+#   curl -X POST http://localhost:3001/api/config/reload
+#
+# Works great with:
+#   - ChatGPT Plus with function calling
+#   - OpenAI Assistants API
+#   - GPT-4 with custom tools
+# =============================================================================
+
+agents:
+  # Executive coordinator - high-level task management
+  - name: "GPT Director"
+    description: "Executive coordinator - strategic planning and task delegation"
+    role: "Director"
+    avatar: "🎯"
+    status: idle
+
+  # Full-stack developer
+  - name: "GPT Engineer"
+    description: "Full-stack engineer - code implementation across the stack"
+    role: "Engineer"
+    avatar: "👨‍💻"
+    status: idle
+
+  # DevOps and infrastructure
+  - name: "GPT Ops"
+    description: "DevOps specialist - CI/CD, cloud, infrastructure automation"
+    role: "DevOps"
+    avatar: "🚀"
+    status: idle
+
+  # Data and analytics specialist
+  - name: "GPT Analyst"
+    description: "Data analyst - research, metrics, reporting, insights"
+    role: "Analyst"
+    avatar: "📊"
+    status: idle
+
+# =============================================================================
+# REST API Integration Example (OpenAI Function Calling)
+# =============================================================================
+#
+# Define these as functions for your GPT assistant:
+#
+# {
+#   "name": "update_task_status",
+#   "description": "Update task status on the Claw Control board",
+#   "parameters": {
+#     "type": "object",
+#     "properties": {
+#       "task_id": { "type": "integer", "description": "Task ID" },
+#       "status": { "type": "string", "enum": ["backlog", "todo", "in_progress", "review", "done"] }
+#     },
+#     "required": ["task_id", "status"]
+#   }
+#}
+#
+# Then implement the function to call:
+#   PUT http://localhost:3001/api/tasks/:id
+# =============================================================================

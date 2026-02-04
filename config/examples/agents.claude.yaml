@@ -1,0 +1,74 @@
+# =============================================================================
+# Claw Control - Claude/Anthropic Agent Configuration
+# =============================================================================
+#
+# Example setup for users working with Claude Code, Claude Desktop, or
+# other Anthropic-based AI assistants. These agents are themed around
+# Claude's helpful, harmless, and honest personality.
+#
+# Usage:
+#   cp config/examples/agents.claude.yaml config/agents.yaml
+#   curl -X POST http://localhost:3001/api/config/reload
+#
+# Tip: Claude works great with the MCP integration! See README.md for setup.
+# =============================================================================
+
+agents:
+  # Main coordinator - handles delegation and high-level planning
+  - name: "Claude Prime"
+    description: "Primary coordinator - plans work and delegates to specialists"
+    role: "Coordinator"
+    avatar: "🧠"
+    status: idle
+
+  # Backend development specialist
+  - name: "Claude Backend"
+    description: "Server-side expert - APIs, databases, system architecture"
+    role: "Backend"
+    avatar: "⚙️"
+    status: idle
+
+  # Frontend and UI specialist
+  - name: "Claude UI"
+    description: "Frontend specialist - React, CSS, user experience design"
+    role: "Frontend"
+    avatar: "🎨"
+    status: idle
+
+  # Research and documentation
+  - name: "Claude Research"
+    description: "Analysis expert - research, documentation, technical writing"
+    role: "Research"
+    avatar: "📖"
+    status: idle
+
+  # Code review and quality assurance
+  - name: "Claude Review"
+    description: "Quality guardian - code review, testing, best practices"
+    role: "QA"
+    avatar: "🔍"
+    status: idle
+
+# =============================================================================
+# MCP Integration (recommended for Claude Code)
+# =============================================================================
+#
+# Add this to your Claude Desktop or Claude Code MCP config:
+#
+# {
+#   "mcpServers": {
+#     "claw-control": {
+#       "command": "node",
+#       "args": ["packages/backend/src/mcp-server.js"],
+#       "env": {
+#         "DATABASE_URL": "sqlite:./data/claw.db"
+#       }
+#     }
+#   }
+# }
+#
+# Then Claude can use tools like:
+#   - list_tasks, create_task, update_task
+#   - list_agents, update_agent_status
+#   - post_message (to the activity feed)
+# =============================================================================

@@ -318,6 +318,27 @@ agents:
     avatar: "🔧"
 ```
 
+### Example Configurations
+
+We provide ready-to-use example configs for different AI frameworks in `config/examples/`:
+
+| File | Description | Best For |
+|------|-------------|----------|
+| [`agents.claude.yaml`](config/examples/agents.claude.yaml) | Claude/Anthropic themed | Claude Code, Claude Desktop |
+| [`agents.openai.yaml`](config/examples/agents.openai.yaml) | GPT/OpenAI themed | ChatGPT, GPT-4, Assistants API |
+| [`agents.openclaw.yaml`](config/examples/agents.openclaw.yaml) | DBZ theme (our setup!) | OpenClaw users, fun teams |
+| [`agents.generic.yaml`](config/examples/agents.generic.yaml) | Framework-agnostic | Any AI, neutral naming |
+
+To use an example:
+
+```bash
+# Copy your preferred example
+cp config/examples/agents.openclaw.yaml config/agents.yaml
+
+# Reload the configuration
+curl -X POST http://localhost:3001/api/config/reload
+```
+
 ### Config Fields
 
 | Field | Required | Description |
@@ -325,8 +346,21 @@ agents:
 | `name` | ✅ | Display name for the agent |
 | `description` | ❌ | What this agent does |
 | `role` | ❌ | Agent role/specialty (default: "Agent") |
-| `avatar` | ❌ | Emoji or image path (default: "🤖") |
+| `avatar` | ❌ | Emoji or image URL (default: "🤖") |
 | `status` | ❌ | Initial status: idle, working, offline (default: "idle") |
+
+### Avatar Options
+
+```yaml
+# Emoji (simplest)
+avatar: "🤖"
+
+# Image URL (custom branding)
+avatar: "https://cdn.example.com/avatars/agent.png"
+
+# Local path (relative to frontend public folder)
+avatar: "/avatars/agent.png"
+```
 
 ### Hot Reload
 

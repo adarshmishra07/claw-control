@@ -1,0 +1,89 @@
+# =============================================================================
+# Claw Control - OpenClaw DBZ Theme Configuration
+# =============================================================================
+#
+# The official OpenClaw team configuration! Dragon Ball Z themed agents
+# for maximum productivity and power levels over 9000. 🐉
+#
+# This is what we use internally at OpenClaw for our AI agent team.
+#
+# Usage:
+#   cp config/examples/agents.openclaw.yaml config/agents.yaml
+#   curl -X POST http://localhost:3001/api/config/reload
+#
+# Pro tip: Each agent has a specialty - delegate accordingly!
+# =============================================================================
+
+agents:
+  # The main coordinator - like the protagonist, he brings the team together
+  - name: "Goku"
+    description: "Main coordinator - delegates tasks and verifies completion"
+    role: "Coordinator"
+    avatar: "🥋"
+    # avatar: "https://example.com/avatars/goku.png"  # Use URL for custom images
+    status: idle
+
+  # The proud warrior - perfect for demanding, precise work
+  - name: "Vegeta"
+    description: "Backend specialist - code review, APIs, databases, tough problems"
+    role: "Backend"
+    avatar: "💪"
+    status: idle
+
+  # The genius inventor - infrastructure and UI work
+  - name: "Bulma"
+    description: "DevOps & Frontend - infrastructure, deployments, UI/UX"
+    role: "DevOps"
+    avatar: "🔧"
+    status: idle
+
+  # The scholar warrior - research and documentation
+  - name: "Gohan"
+    description: "Research specialist - analysis, documentation, investigation"
+    role: "Research"
+    avatar: "📚"
+    status: idle
+
+  # The wise strategist - architecture and system design
+  - name: "Piccolo"
+    description: "Architecture expert - system design, planning, code review"
+    role: "Architect"
+    avatar: "🧘"
+    status: idle
+
+  # The time traveler - rapid deployments and hotfixes
+  - name: "Trunks"
+    description: "Deployment specialist - hotfixes, releases, urgent deployments"
+    role: "Releases"
+    avatar: "⚡"
+    status: idle
+
+# =============================================================================
+# Alternative Avatar Styles
+# =============================================================================
+#
+# Emoji avatars (default, shown above):
+#   avatar: "🥋"
+#
+# URL avatars (for custom images):
+#   avatar: "https://your-cdn.com/avatars/goku.png"
+#   avatar: "/public/avatars/goku.png"  # Local path
+#
+# Image path avatars (relative to frontend public folder):
+#   avatar: "/avatars/goku.png"
+#
+# =============================================================================
+# Communication Protocol
+# =============================================================================
+#
+# How we use this at OpenClaw:
+#
+# 1. Goku (Coordinator) receives tasks from Adarsh
+# 2. Goku delegates to the right specialist agent
+# 3. Agent updates their status to "working" via API
+# 4. Agent posts progress messages to the feed
+# 5. Agent marks task complete, status back to "idle"
+# 6. Goku verifies and reports back
+#
+# This keeps everything visible on the dashboard in real-time!
+# =============================================================================
