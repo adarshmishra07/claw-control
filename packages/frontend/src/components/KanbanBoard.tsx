@@ -218,7 +218,7 @@ function KanbanColumn({ status, tasks, agents }: KanbanColumnProps) {
   return (
     <div 
       ref={setNodeRef}
-      className="flex flex-col h-full bg-claw-surface/30 border border-white/5 rounded-2xl overflow-hidden min-w-[280px] sm:min-w-[300px] md:min-w-0 max-w-[90vw] md:max-w-none snap-center flex-shrink-0 md:flex-shrink backdrop-blur-sm"
+      className="flex flex-col h-full bg-claw-surface/30 border border-white/5 rounded-2xl overflow-hidden min-w-[280px] sm:min-w-[300px] max-w-[90vw] md:max-w-none snap-center flex-shrink-0 backdrop-blur-sm"
     >
       <div className={`p-3 border-b border-white/5 bg-claw-surface/50`}>
         <div className="flex items-center gap-2.5">
@@ -254,7 +254,7 @@ function KanbanColumn({ status, tasks, agents }: KanbanColumnProps) {
 
 function ColumnSkeleton() {
   return (
-    <div className="flex flex-col h-full bg-claw-surface/30 border border-white/5 rounded-2xl overflow-hidden min-w-[280px] sm:min-w-[300px] md:min-w-0 snap-center">
+    <div className="flex flex-col h-full bg-claw-surface/30 border border-white/5 rounded-2xl overflow-hidden min-w-[280px] sm:min-w-[300px] snap-center">
       <div className="p-3 border-b border-white/5">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-white/5 animate-pulse" />
@@ -319,7 +319,7 @@ export function KanbanBoard({ kanban, agents, loading, onMoveTask }: KanbanBoard
   if (loading) {
     return (
       <div className="h-full p-3 sm:p-4">
-        <div className="flex md:grid md:grid-cols-5 gap-3 sm:gap-4 h-full overflow-x-auto md:overflow-x-hidden snap-x snap-mandatory pb-2 md:pb-0">
+        <div className="flex gap-3 sm:gap-4 h-full overflow-x-auto snap-x snap-mandatory pb-2">
           {[1, 2, 3, 4, 5].map(i => (
             <ColumnSkeleton key={i} />
           ))}
@@ -336,7 +336,7 @@ export function KanbanBoard({ kanban, agents, loading, onMoveTask }: KanbanBoard
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex md:grid md:grid-cols-5 gap-3 sm:gap-4 h-full overflow-x-auto md:overflow-x-hidden snap-x snap-mandatory md:snap-none pb-2 md:pb-0 scrollbar-thin">
+        <div className="flex gap-3 sm:gap-4 h-full overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-thin">
           {columns.map(status => (
             <KanbanColumn
               key={status}

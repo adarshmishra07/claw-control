@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Radio, Wifi, WifiOff, Bot, LayoutGrid, MessageSquare } from 'lucide-react';
+import { Wifi, WifiOff, Bot, LayoutGrid, MessageSquare } from 'lucide-react';
 import { AgentsList } from './components/AgentsList';
 import { KanbanBoard } from './components/KanbanBoard';
 import { AgentChat } from './components/AgentChat';
@@ -13,7 +13,7 @@ function Header({ connected }: { connected: boolean }) {
     <header className="h-14 sm:h-16 px-4 sm:px-6 border-b border-white/5 bg-claw-surface/80 backdrop-blur-md flex items-center justify-between">
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-primary/20 to-accent-secondary/20 border border-accent-primary/30 flex items-center justify-center">
-          <Radio className="w-4 h-4 text-accent-primary" />
+          <span className="text-lg">🦞</span>
         </div>
         <div>
           <h1 className="text-base sm:text-lg font-bold tracking-tight text-white">
