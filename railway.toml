@@ -4,10 +4,13 @@
 [build]
 builder = "nixpacks"
 
+# Let Nixpacks auto-detect Vite SPA and use Caddy
+# For monorepo, specify the output directory
+[build.env]
+NIXPACKS_SPA_OUT_DIR = "packages/frontend/dist"
+
 [deploy]
-# Frontend: static site, just check root loads
-# Backend: has /health endpoint
-healthcheckPath = "/health"
-healthcheckTimeout = 100
+healthcheckPath = "/"
+healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 5

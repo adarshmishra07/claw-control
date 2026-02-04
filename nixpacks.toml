@@ -1,7 +1,0 @@
-# Nixpacks config at monorepo root
-
-[phases.build]
-cmds = ["npm run build --workspace=@claw-control/frontend", "echo 'OK' > packages/frontend/dist/health"]
-
-[start]
-cmd = "npx serve packages/frontend/dist -s -p $PORT"
