@@ -1,32 +1,18 @@
-FROM node:20-alpine AS builder
+# Simple Dockerfile for Claw Control Frontend
+FROM node:22-alpine AS builder
 
 WORKDIR /app
-
 COPY package*.json ./
+COPY packages/frontend/package*.json ./packages/frontend/
 RUN npm ci
 
 COPY . .
+RUN npm run build --workspace=@claw-control/frontend
 
-ARG VITE_API_URL
-ENV VITE_API_URL=$VITE_API_URL
-
-RUN npm run build
-
-# Production stage with nginx
-FROM nginx:alpine
-
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Configure nginx for SPA routing
-RUN echo 'server { \
-    listen 80; \
-    root /usr/share/nginx/html; \
-    index index.html; \
-    location / { \
-        try_files $uri $uri/ /index.html; \
-    } \
-}' > /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+# Production - serve with simple static server
+FROM node:22-alpine
+RUN npm install -g serve
+COPY --from=builder /app/packages/frontend/dist /app/dist
+WORKDIR /app
+EXPOSE 3000
+CMD ["sh", "-c", "serve -s dist -l $PORT"]
