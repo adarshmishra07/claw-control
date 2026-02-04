@@ -1,215 +1,212 @@
 /**
  * @fileoverview Landing Page for Claw Control
  * 
- * EXACT match of OpenClaw.ai design structure
+ * Original Claw Control content with OpenClaw.ai visual theme:
+ * - Dark gradient background (#000 → #14080a burgundy)
+ * - Coral/red accent colors (#FF6B6B, #EF4444)
+ * - Cards with bg-black/40 and subtle borders
+ * - Star particles background
+ * - Playfair Display serif headings with gradient
  */
 
 import { motion } from 'framer-motion';
 import {
+  Bot,
   LayoutGrid,
   MessageSquare,
-  Bot,
+  Clock,
+  Globe,
+  Shield,
+  Workflow,
+  Terminal,
   Users,
   Rocket,
   ArrowRight,
+  ChevronRight,
   Github,
   Copy,
   Check,
-  Database,
-  Gauge,
-  Puzzle,
-  BookOpen,
-  MessageCircle,
+  Sparkles,
 } from 'lucide-react';
 import { useState } from 'react';
 
-const fadeIn = {
+// Animation variants
+const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0 },
 };
 
-const staggerContainer = {
-  hidden: { opacity: 0 },
+const stagger = {
   visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.06 }
-  }
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: { opacity: 1, scale: 1 },
 };
 
 // ============ Components ============
 
-function Terminal({ command }: { command: string }) {
+interface FeatureCardProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  delay?: number;
+}
+
+function FeatureCard({ icon, title, description, delay = 0 }: FeatureCardProps) {
+  return (
+    <motion.div
+      variants={fadeInUp}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ duration: 0.5, delay }}
+      whileHover={{ scale: 1.02, y: -5 }}
+      className="feature-card group relative p-6 rounded-2xl"
+    >
+      <div className="relative z-10">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FF6B6B]/20 to-[#EF4444]/10 flex items-center justify-center mb-4 group-hover:from-[#FF6B6B]/30 group-hover:to-[#EF4444]/20 transition-colors">
+          <span className="text-[#FF6B6B]">{icon}</span>
+        </div>
+        <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
+        <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
+      </div>
+    </motion.div>
+  );
+}
+
+interface StepCardProps {
+  number: string;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+}
+
+function StepCard({ number, title, description, icon }: StepCardProps) {
+  return (
+    <motion.div
+      variants={fadeInUp}
+      className="relative flex items-start gap-4"
+    >
+      <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-[#FF6B6B] to-[#EF4444] flex items-center justify-center">
+        <span className="font-display font-black text-white text-lg">{number}</span>
+      </div>
+      <div className="flex-1 pb-8 border-l border-[#FF6B6B]/30 pl-6 ml-6 -mt-1">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-[#FF6B6B]">{icon}</span>
+          <h3 className="font-semibold text-white">{title}</h3>
+        </div>
+        <p className="text-gray-400 text-sm">{description}</p>
+      </div>
+    </motion.div>
+  );
+}
+
+function CodeBlock({ code, language = "bash" }: { code: string; language?: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(command);
+    await navigator.clipboard.writeText(code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
     <div className="terminal rounded-xl overflow-hidden">
-      <div className="terminal-header px-4 py-3 flex items-center gap-2">
-        <div className="w-3 h-3 rounded-full bg-[#FF5F56]" />
-        <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
-        <div className="w-3 h-3 rounded-full bg-[#27CA3F]" />
-      </div>
-      <div className="flex items-center justify-between px-5 py-4">
-        <code className="text-sm text-gray-300 font-mono">
-          <span className="text-[#FF6B6B]">$</span> {command}
-        </code>
+      <div className="terminal-header px-4 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-[#FF5F56]" />
+          <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
+          <div className="w-3 h-3 rounded-full bg-[#27CA3F]" />
+        </div>
+        <span className="text-xs font-mono text-gray-500">{language}</span>
         <button
           onClick={handleCopy}
-          className="ml-4 p-2 hover:bg-white/5 rounded-lg transition-colors"
+          className="p-1.5 hover:bg-white/5 rounded transition-colors"
+          title="Copy to clipboard"
         >
           {copied ? (
             <Check className="w-4 h-4 text-green-400" />
           ) : (
-            <Copy className="w-4 h-4 text-gray-500 hover:text-white" />
+            <Copy className="w-4 h-4 text-gray-500 hover:text-[#FF6B6B]" />
           )}
         </button>
       </div>
+      <pre className="p-4 overflow-x-auto">
+        <code className="text-sm font-mono text-[#FF6B6B]">{code}</code>
+      </pre>
     </div>
   );
 }
 
-// Feature Card
-interface FeatureCardProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
+interface LandingPageProps {
+  onEnterDashboard?: () => void;
 }
 
-function FeatureCard({ icon, title, description }: FeatureCardProps) {
+export function LandingPage({ onEnterDashboard }: LandingPageProps) {
   return (
-    <motion.div
-      variants={fadeIn}
-      className="feature-card p-6 rounded-2xl"
-    >
-      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B6B]/20 to-[#EF4444]/10 flex items-center justify-center mb-4">
-        <span className="text-[#FF6B6B]">{icon}</span>
-      </div>
-      <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
-      <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
-    </motion.div>
-  );
-}
-
-// Testimonials
-const testimonials = [
-  {
-    avatar: "🧑‍💻",
-    name: "DevOps Engineer",
-    handle: "@devops_daily",
-    quote: "Finally, a dashboard that lets me see what all my AI agents are doing at once. The real-time updates are chef's kiss 👨‍🍳",
-  },
-  {
-    avatar: "👩‍🔬",
-    name: "AI Researcher", 
-    handle: "@ai_labs",
-    quote: "We use this to coordinate our multi-agent experiments. The kanban workflow is perfect for tracking parallel tasks.",
-  },
-  {
-    avatar: "🚀",
-    name: "Indie Hacker",
-    handle: "@shipper",
-    quote: "Deployed in 2 minutes on Railway. Now I can stop asking my agents 'what are you working on?' every 5 minutes 😅",
-  },
-];
-
-function TestimonialCard({ avatar, name, handle, quote }: typeof testimonials[0]) {
-  return (
-    <motion.div 
-      variants={fadeIn}
-      className="testimonial-card p-6 rounded-2xl"
-    >
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-xl">
-          {avatar}
-        </div>
-        <div>
-          <div className="font-semibold text-white text-sm">{name}</div>
-          <div className="text-sm text-[#FF6B6B]">{handle}</div>
-        </div>
-      </div>
-      <p className="text-gray-300 text-sm leading-relaxed">"{quote}"</p>
-    </motion.div>
-  );
-}
-
-// Integration badges
-const integrations = [
-  { name: "OpenClaw", icon: "🦞" },
-  { name: "Railway", icon: "🚂" },
-  { name: "Docker", icon: "🐳" },
-  { name: "Claude", icon: "🤖" },
-  { name: "GPT", icon: "✨" },
-  { name: "Telegram", icon: "📱" },
-  { name: "Discord", icon: "🎮" },
-  { name: "Slack", icon: "💼" },
-  { name: "GitHub", icon: "🐙" },
-  { name: "REST API", icon: "🔌" },
-  { name: "Webhooks", icon: "🪝" },
-  { name: "SSE", icon: "📡" },
-  { name: "Vercel", icon: "▲" },
-  { name: "Fly.io", icon: "🪁" },
-];
-
-function IntegrationBadge({ name, icon }: { name: string; icon: string }) {
-  return (
-    <motion.div
-      variants={fadeIn}
-      className="integration-badge px-4 py-2.5 rounded-full flex items-center gap-2"
-    >
-      <span className="text-lg">{icon}</span>
-      <span className="text-sm text-gray-300">{name}</span>
-    </motion.div>
-  );
-}
-
-// Press/Built For cards
-const pressItems = [
-  {
-    icon: "🤖",
-    title: "AI Developers",
-    description: "Building multi-agent systems and AI workflows",
-  },
-  {
-    icon: "🏢",
-    title: "Startups",
-    description: "Running AI-powered automation at scale",
-  },
-];
-
-// ============ Main Component ============
-
-export function LandingPage() {
-  const [activeTab, setActiveTab] = useState<'railway' | 'npm' | 'docker' | 'git'>('railway');
-
-  const commands: Record<string, string> = {
-    railway: 'railway up',
-    npm: 'npx clawhub install claw-control',
-    docker: 'docker run -p 3000:3000 ghcr.io/adarshmishra07/claw-control',
-    git: 'git clone https://github.com/adarshmishra07/claw-control && cd claw-control && npm start',
-  };
-
-  return (
-    <div className="min-h-screen text-white relative">
+    <div className="min-h-screen text-white relative overflow-x-hidden">
       {/* Background */}
       <div className="space-bg" />
       <div className="stars" />
 
-      {/* ======== HERO ======== */}
-      <section className="pt-20 pb-12 px-4">
-        <div className="max-w-4xl mx-auto text-center">
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-black/80 border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-3"
+            >
+              <span className="text-2xl">🦞</span>
+              <span className="font-display font-bold gradient-text text-lg">
+                Claw Control
+              </span>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-4"
+            >
+              <a
+                href="https://github.com/adarshmishra07/claw-control"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 hover:bg-white/5 rounded-lg transition-colors"
+              >
+                <Github className="w-5 h-5 text-gray-400 hover:text-[#FF6B6B]" />
+              </a>
+              {onEnterDashboard && (
+                <button
+                  onClick={onEnterDashboard}
+                  className="px-4 py-2 bg-[#FF6B6B]/10 hover:bg-[#FF6B6B]/20 border border-[#FF6B6B]/30 rounded-lg font-medium text-sm text-[#FF6B6B] transition-all hover:border-[#FF6B6B]/50"
+                >
+                  Dashboard
+                </button>
+              )}
+            </motion.div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="relative min-h-screen flex items-center justify-center pt-16 overflow-hidden">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <motion.div
             initial="hidden"
             animate="visible"
-            variants={fadeIn}
-            transition={{ duration: 0.6 }}
+            variants={stagger}
+            className="text-center"
           >
-            {/* 1. Lobster Logo */}
+            {/* Lobster Logo */}
             <motion.div 
+              variants={fadeInUp}
               className="mb-6"
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
@@ -217,379 +214,380 @@ export function LandingPage() {
               <span className="text-7xl sm:text-8xl filter drop-shadow-lg">🦞</span>
             </motion.div>
 
-            {/* 2. Title - Serif + Gradient */}
-            <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-black mb-4 tracking-tight">
-              <span className="gradient-text">Claw Control</span>
-            </h1>
-            
-            {/* 3. Tagline - SPACED UPPERCASE */}
-            <p className="tagline text-[#FF6B6B] text-xs sm:text-sm mb-6 tracking-[0.3em]">
-              THE DASHBOARD FOR AI AGENT TEAMS.
-            </p>
-            
-            {/* 4. Description */}
-            <p className="text-base sm:text-lg text-gray-400 mb-8 max-w-xl mx-auto leading-relaxed">
-              A beautiful kanban board to coordinate your AI agents. 
-              Track tasks, monitor status, and watch your team work in real-time.
-            </p>
-
-            {/* 5. NEW Pill + Introducing Button */}
-            <motion.a
-              href="https://github.com/adarshmishra07/claw-control/releases"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="pill-button inline-flex items-center gap-3 px-5 py-2.5 rounded-full"
-              whileHover={{ scale: 1.02 }}
+            {/* Badge */}
+            <motion.div
+              variants={fadeInUp}
+              className="pill-button inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8"
             >
-              <span className="pill-new text-white">NEW</span>
-              <span className="text-gray-300 text-sm">Introducing Claw Control</span>
-              <ArrowRight className="w-4 h-4 text-[#FF6B6B]" />
-            </motion.a>
-          </motion.div>
-        </div>
-      </section>
+              <Sparkles className="w-4 h-4 text-[#FF6B6B]" />
+              <span className="text-sm font-mono text-[#FF6B6B]">Open Source Mission Control</span>
+            </motion.div>
 
-      {/* ======== 6. WHAT PEOPLE SAY ======== */}
-      <section className="py-16 px-4">
-        <div className="max-w-5xl mx-auto">
-          <motion.h2
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeIn}
-            className="text-2xl sm:text-3xl font-bold text-white text-center mb-10"
-          >
-            What People Say
-          </motion.h2>
+            {/* Main headline */}
+            <motion.h1
+              variants={fadeInUp}
+              className="font-display text-5xl sm:text-6xl md:text-7xl font-black mb-6 tracking-tight"
+            >
+              <span className="text-white">Your AI Agents</span>
+              <br />
+              <span className="gradient-text">Under Control</span>
+            </motion.h1>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-            className="grid md:grid-cols-3 gap-4"
-          >
-            {testimonials.map((t, i) => (
-              <TestimonialCard key={i} {...t} />
-            ))}
-          </motion.div>
-        </div>
-      </section>
+            {/* Subtitle */}
+            <motion.p
+              variants={fadeInUp}
+              className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed"
+            >
+              A beautiful, real-time dashboard to manage your AI agent workforce. 
+              Monitor tasks, track progress, and coordinate your autonomous team 
+              with military precision.
+            </motion.p>
 
-      {/* ======== 7. QUICK START ======== */}
-      <section className="py-16 px-4">
-        <div className="max-w-2xl mx-auto">
-          <motion.h2
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeIn}
-            className="text-2xl sm:text-3xl font-bold text-white text-center mb-8"
-          >
-            Quick Start
-          </motion.h2>
-
-          {/* Tab Selector */}
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeIn}
-            className="flex flex-wrap justify-center gap-2 mb-6"
-          >
-            {[
-              { id: 'railway', label: 'One-Click' },
-              { id: 'npm', label: 'npm' },
-              { id: 'docker', label: 'Docker' },
-              { id: 'git', label: 'Self-Host' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
-                  activeTab === tab.id 
-                    ? 'bg-[#FF6B6B]/15 border-[#FF6B6B]/40 text-[#FF6B6B]' 
-                    : 'bg-transparent border-white/10 text-gray-400 hover:border-white/20 hover:text-white'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </motion.div>
-
-          {/* Terminal / Deploy Button */}
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeIn}
-          >
-            {activeTab === 'railway' ? (
-              <div className="text-center">
+            {/* CTA Buttons */}
+            <motion.div
+              variants={fadeInUp}
+              className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            >
+              {onEnterDashboard ? (
+                <button
+                  onClick={onEnterDashboard}
+                  className="btn-primary group px-8 py-4 rounded-xl font-semibold flex items-center gap-2"
+                >
+                  Launch Dashboard
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+              ) : (
                 <a
                   href="https://railway.com/deploy/_odwJ4?referralCode=VsZvQs"
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="btn-primary group px-8 py-4 rounded-xl font-semibold flex items-center gap-2"
                 >
-                  <img 
-                    src="https://railway.com/button.svg" 
-                    alt="Deploy on Railway" 
-                    className="h-12 mx-auto hover:opacity-90 transition-opacity"
-                  />
+                  <Rocket className="w-5 h-5" />
+                  Deploy on Railway
                 </a>
-                <p className="text-gray-500 text-sm mt-4">Click → Configure → Done in 2 minutes</p>
-              </div>
-            ) : (
-              <Terminal command={commands[activeTab]} />
-            )}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ======== 8. WHAT IT DOES ======== */}
-      <section className="py-16 px-4">
-        <div className="max-w-5xl mx-auto">
-          <motion.h2
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeIn}
-            className="text-2xl sm:text-3xl font-bold text-white text-center mb-10"
-          >
-            What It Does
-          </motion.h2>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-4"
-          >
-            <FeatureCard
-              icon={<LayoutGrid className="w-5 h-5" />}
-              title="Kanban Board"
-              description="Drag-and-drop tasks across columns. Backlog → Todo → In Progress → Review → Done."
-            />
-            <FeatureCard
-              icon={<Bot className="w-5 h-5" />}
-              title="Agent Tracking"
-              description="See which agents are working, idle, or offline. Real-time status with colored indicators."
-            />
-            <FeatureCard
-              icon={<MessageSquare className="w-5 h-5" />}
-              title="Live Feed"
-              description="Watch agent communications as they happen. Never miss an important update."
-            />
-            <FeatureCard
-              icon={<Gauge className="w-5 h-5" />}
-              title="Real-Time Sync"
-              description="Instant updates via Server-Sent Events. No manual refresh needed."
-            />
-            <FeatureCard
-              icon={<Users className="w-5 h-5" />}
-              title="Multi-Agent Teams"
-              description="Coordinate entire teams. Assign specialists to tasks by their strengths."
-            />
-            <FeatureCard
-              icon={<Database className="w-5 h-5" />}
-              title="Persistent State"
-              description="SQLite database keeps your tasks and history. Survives restarts."
-            />
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ======== 9. WORKS WITH EVERYTHING ======== */}
-      <section className="py-16 px-4">
-        <div className="max-w-5xl mx-auto">
-          <motion.h2
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeIn}
-            className="text-2xl sm:text-3xl font-bold text-white text-center mb-10"
-          >
-            Works With Everything
-          </motion.h2>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-            className="flex flex-wrap justify-center gap-3"
-          >
-            {integrations.map((int, i) => (
-              <IntegrationBadge key={i} {...int} />
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ======== 10. FEATURED IN / BUILT FOR ======== */}
-      <section className="py-16 px-4">
-        <div className="max-w-3xl mx-auto">
-          <motion.h2
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeIn}
-            className="text-2xl sm:text-3xl font-bold text-white text-center mb-10"
-          >
-            Built For
-          </motion.h2>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-            className="grid sm:grid-cols-2 gap-4"
-          >
-            {pressItems.map((item, i) => (
-              <motion.div 
-                key={i}
-                variants={fadeIn}
-                className="press-card p-6 rounded-2xl flex items-start gap-4"
-              >
-                <div className="text-3xl">{item.icon}</div>
-                <div>
-                  <h3 className="font-semibold text-white mb-1">{item.title}</h3>
-                  <p className="text-gray-500 text-sm">{item.description}</p>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ======== 11. FOOTER ICONS ======== */}
-      <section className="py-12 px-4">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={fadeIn}
-          className="flex justify-center gap-4"
-        >
-          <a
-            href="https://github.com/adarshmishra07/claw-control/discussions"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="footer-icon-btn p-4 rounded-xl"
-            title="Discussions"
-          >
-            <MessageCircle className="w-6 h-6 text-gray-400 hover:text-white transition-colors" />
-          </a>
-          <a
-            href="https://github.com/adarshmishra07/claw-control#readme"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="footer-icon-btn p-4 rounded-xl"
-            title="Documentation"
-          >
-            <BookOpen className="w-6 h-6 text-gray-400 hover:text-white transition-colors" />
-          </a>
-          <a
-            href="https://github.com/adarshmishra07/claw-control"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="footer-icon-btn p-4 rounded-xl"
-            title="GitHub"
-          >
-            <Github className="w-6 h-6 text-gray-400 hover:text-white transition-colors" />
-          </a>
-          <a
-            href="https://clawhub.ai/adarshmishra07/claw-control"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="footer-icon-btn p-4 rounded-xl"
-            title="ClawHub"
-          >
-            <span className="text-2xl opacity-60 hover:opacity-100 transition-opacity">🦞</span>
-          </a>
-        </motion.div>
-      </section>
-
-      {/* ======== 12. STAY IN THE LOOP ======== */}
-      <section className="py-12 px-4">
-        <div className="max-w-md mx-auto text-center">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeIn}
-          >
-            <h2 className="text-xl font-bold text-white mb-3">Stay in the Loop</h2>
-            <p className="text-gray-500 text-sm mb-5">Updates on new features and releases</p>
-            
-            <div className="flex gap-2">
-              <input
-                type="email"
-                placeholder="you@email.com"
-                className="newsletter-input flex-1 px-4 py-3 rounded-xl text-white text-sm placeholder-gray-500"
-              />
-              <button className="btn-primary px-5 py-3 rounded-xl text-white font-semibold text-sm">
-                Subscribe
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ======== CTA ======== */}
-      <section className="py-16 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeIn}
-          >
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-              <span className="gradient-text">Ready to Coordinate?</span>
-            </h2>
-            <p className="text-gray-400 mb-8">
-              Open source • Self-hosted • Free forever
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a
-                href="https://railway.com/deploy/_odwJ4?referralCode=VsZvQs"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-primary px-8 py-4 rounded-xl flex items-center gap-2 text-white font-semibold"
-              >
-                <Rocket className="w-5 h-5" />
-                Deploy on Railway
-              </a>
+              )}
               <a
                 href="https://github.com/adarshmishra07/claw-control"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-secondary px-8 py-4 rounded-xl flex items-center gap-2 text-white font-semibold"
+                className="btn-secondary px-8 py-4 rounded-xl font-semibold flex items-center gap-2"
               >
                 <Github className="w-5 h-5" />
-                Star on GitHub
+                View on GitHub
               </a>
+            </motion.div>
+
+            {/* Stats */}
+            <motion.div
+              variants={fadeInUp}
+              className="mt-16 grid grid-cols-3 gap-8 max-w-2xl mx-auto"
+            >
+              {[
+                { value: '100%', label: 'Open Source' },
+                { value: 'Real-time', label: 'Updates' },
+                { value: 'Mobile', label: 'Responsive' },
+              ].map((stat, i) => (
+                <div key={i} className="text-center">
+                  <div className="text-2xl sm:text-3xl font-display font-bold text-[#FF6B6B]">{stat.value}</div>
+                  <div className="text-sm text-gray-500 font-mono">{stat.label}</div>
+                </div>
+              ))}
+            </motion.div>
+          </motion.div>
+        </div>
+
+        {/* Scroll indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+        >
+          <motion.div
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="w-6 h-10 rounded-full border-2 border-[#FF6B6B]/30 flex items-start justify-center p-2"
+          >
+            <div className="w-1.5 h-2.5 rounded-full bg-[#FF6B6B]" />
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* Features Section */}
+      <section className="relative py-24 sm:py-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={stagger}
+            className="text-center mb-16"
+          >
+            <motion.h2 variants={fadeInUp} className="text-3xl sm:text-4xl font-display font-bold mb-4">
+              Everything You Need to
+              <span className="gradient-text"> Command Your Agents</span>
+            </motion.h2>
+            <motion.p variants={fadeInUp} className="text-gray-400 max-w-2xl mx-auto">
+              Built with modern tech stack for maximum performance and developer experience
+            </motion.p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <FeatureCard
+              icon={<Bot className="w-6 h-6" />}
+              title="Agent Management"
+              description="Monitor and manage all your AI agents in one place. See who's working, who's idle, and what everyone's up to."
+              delay={0}
+            />
+            <FeatureCard
+              icon={<LayoutGrid className="w-6 h-6" />}
+              title="Kanban Board"
+              description="Drag-and-drop task management with real-time updates. Organize work across backlog, in progress, review, and done."
+              delay={0.1}
+            />
+            <FeatureCard
+              icon={<MessageSquare className="w-6 h-6" />}
+              title="Live Agent Feed"
+              description="Real-time stream of agent communications and status updates. Stay informed about everything happening in your system."
+              delay={0.2}
+            />
+            <FeatureCard
+              icon={<Clock className="w-6 h-6" />}
+              title="Real-time Sync"
+              description="Server-sent events (SSE) keep your dashboard perfectly in sync. Changes appear instantly, no refresh needed."
+              delay={0.3}
+            />
+            <FeatureCard
+              icon={<Globe className="w-6 h-6" />}
+              title="Mobile First"
+              description="Fully responsive design that works beautifully on any device. Manage your agents from anywhere."
+              delay={0.4}
+            />
+            <FeatureCard
+              icon={<Shield className="w-6 h-6" />}
+              title="Open Source"
+              description="MIT licensed and fully transparent. Fork it, customize it, make it yours. Contributions welcome!"
+              delay={0.5}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* How it Works Section */}
+      <section className="relative py-24 sm:py-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={stagger}
+            className="text-center mb-16"
+          >
+            <motion.div variants={fadeInUp} className="pill-button inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6">
+              <Workflow className="w-4 h-4 text-[#FF6B6B]" />
+              <span className="text-sm font-mono text-[#FF6B6B]">How It Works</span>
+            </motion.div>
+            <motion.h2 variants={fadeInUp} className="text-3xl sm:text-4xl font-display font-bold mb-4">
+              Get Started in
+              <span className="gradient-text"> Minutes</span>
+            </motion.h2>
+            <motion.p variants={fadeInUp} className="text-gray-400 max-w-2xl mx-auto">
+              Three simple steps to have your mission control center up and running
+            </motion.p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={stagger}
+            className="max-w-2xl mx-auto"
+          >
+            <StepCard
+              number="1"
+              title="Clone the Repository"
+              description="Fork and clone Claw Control from GitHub. It's open source and ready to customize."
+              icon={<Github className="w-5 h-5" />}
+            />
+            <StepCard
+              number="2"
+              title="Configure & Deploy"
+              description="Set up your environment variables and deploy with Docker. Works locally or in the cloud."
+              icon={<Terminal className="w-5 h-5" />}
+            />
+            <StepCard
+              number="3"
+              title="Connect Your Agents"
+              description="Point your AI agents to the Mission Control API. They'll start reporting in automatically."
+              icon={<Users className="w-5 h-5" />}
+            />
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Quick Start Section */}
+      <section className="relative py-24 sm:py-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={stagger}
+            className="text-center mb-16"
+          >
+            <motion.div variants={fadeInUp} className="pill-button inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6">
+              <Terminal className="w-4 h-4 text-[#FF6B6B]" />
+              <span className="text-sm font-mono text-[#FF6B6B]">Quick Start</span>
+            </motion.div>
+            <motion.h2 variants={fadeInUp} className="text-3xl sm:text-4xl font-display font-bold mb-4">
+              Ready to
+              <span className="gradient-text"> Launch?</span>
+            </motion.h2>
+            <motion.p variants={fadeInUp} className="text-gray-400 max-w-2xl mx-auto">
+              Get Claw Control running with these simple commands
+            </motion.p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={scaleIn}
+            className="max-w-3xl mx-auto space-y-6"
+          >
+            <CodeBlock
+              code={`# Clone the repository
+git clone https://github.com/adarshmishra07/claw-control.git
+cd claw-control`}
+              language="bash"
+            />
+            <CodeBlock
+              code={`# Start with Docker Compose
+docker compose up -d`}
+              language="bash"
+            />
+            <CodeBlock
+              code={`# Or run locally
+npm install
+npm run dev`}
+              language="bash"
+            />
+          </motion.div>
+
+          {/* One-click deploy option */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mt-12"
+          >
+            <p className="text-gray-500 mb-4">Or deploy instantly:</p>
+            <a
+              href="https://railway.com/deploy/_odwJ4?referralCode=VsZvQs"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img 
+                src="https://railway.com/button.svg" 
+                alt="Deploy on Railway" 
+                className="h-12 mx-auto hover:opacity-90 transition-opacity"
+              />
+            </a>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="relative py-24 sm:py-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={scaleIn}
+            className="relative overflow-hidden rounded-2xl testimonial-card p-8 sm:p-12 lg:p-16"
+          >
+            {/* Background glow */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF6B6B]/10 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#EF4444]/10 rounded-full blur-3xl" />
+
+            <div className="relative text-center">
+              <motion.div
+                initial={{ scale: 0 }}
+                whileInView={{ scale: 1 }}
+                viewport={{ once: true }}
+                className="w-20 h-20 mx-auto mb-8 rounded-2xl bg-gradient-to-br from-[#FF6B6B] to-[#EF4444] flex items-center justify-center"
+              >
+                <Rocket className="w-10 h-10 text-white" />
+              </motion.div>
+
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold mb-6">
+                Ready to Take
+                <span className="gradient-text"> Control?</span>
+              </h2>
+
+              <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-10">
+                Join the future of AI agent management. Open source, self-hosted, 
+                and built for teams who demand the best.
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                {onEnterDashboard ? (
+                  <button
+                    onClick={onEnterDashboard}
+                    className="btn-primary group px-8 py-4 rounded-xl font-semibold flex items-center gap-2"
+                  >
+                    Enter Dashboard
+                    <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                ) : (
+                  <a
+                    href="https://railway.com/deploy/_odwJ4?referralCode=VsZvQs"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-primary group px-8 py-4 rounded-xl font-semibold flex items-center gap-2"
+                  >
+                    <Rocket className="w-5 h-5" />
+                    Deploy Now
+                  </a>
+                )}
+                <a
+                  href="https://github.com/adarshmishra07/claw-control"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-secondary px-8 py-4 rounded-xl font-semibold flex items-center gap-2"
+                >
+                  <Github className="w-5 h-5" />
+                  Star on GitHub
+                </a>
+              </div>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* ======== 13. FOOTER ======== */}
-      <footer className="border-t border-white/5 py-8 px-4">
-        <div className="max-w-5xl mx-auto">
+      {/* Footer */}
+      <footer className="border-t border-white/5 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <span className="text-xl">🦞</span>
-              <span className="font-semibold text-white">Claw Control</span>
+              <span className="font-semibold gradient-text">Claw Control</span>
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500">
-              <a href="https://github.com/adarshmishra07/claw-control#readme" className="hover:text-[#FF6B6B] transition-colors">Docs</a>
-              <a href="https://github.com/adarshmishra07/claw-control" className="hover:text-[#FF6B6B] transition-colors">GitHub</a>
-              <a href="https://clawhub.ai/adarshmishra07/claw-control" className="hover:text-[#FF6B6B] transition-colors">ClawHub</a>
-              <a href="https://github.com/adarshmishra07/claw-control/blob/main/LICENSE" className="hover:text-[#FF6B6B] transition-colors">MIT License</a>
+            <div className="text-sm text-gray-500 font-mono">
+              Built with love by the OpenClaw community
+            </div>
+            <div className="flex items-center gap-4">
+              <a
+                href="https://github.com/adarshmishra07/claw-control"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 hover:bg-white/5 rounded-lg transition-colors"
+              >
+                <Github className="w-5 h-5 text-gray-500 hover:text-[#FF6B6B]" />
+              </a>
             </div>
           </div>
         </div>
