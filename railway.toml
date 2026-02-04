@@ -1,7 +1,5 @@
 # Railway deployment configuration for Claw Control
-
-[build]
-builder = "nixpacks"
+# Let Railway auto-detect Dockerfile
 
 [start]
-cmd = "npx serve -s packages/frontend/dist -l $PORT"
+cmd = "serve -s dist -l $PORT"
