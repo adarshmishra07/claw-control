@@ -50,8 +50,6 @@ function StatusIndicator({ status }: { status: AgentStatus }) {
 }
 
 function AgentCard({ agent }: { agent: Agent }) {
-  const statusStyle = statusConfig[agent.status] || statusConfig.offline;
-  
   return (
     <div className={`
       p-4 rounded-xl border border-white/5 
