@@ -1,20 +1,35 @@
+/**
+ * @fileoverview Claw Control API Server.
+ * 
+ * This module defines all REST API endpoints for the Claw Control dashboard,
+ * including tasks, agents, messages, and real-time SSE streaming. It supports
+ * both PostgreSQL and SQLite backends via the db-adapter.
+ * 
+ * @module server
+ */
+
 const fastify = require('fastify')({ logger: true });
 const cors = require('@fastify/cors');
 const dbAdapter = require('./db-adapter');
 const { loadAgentsConfig, getConfigPath, CONFIG_PATHS } = require('./config-loader');
 
-// Helper to handle parameterized queries for both Postgres ($1) and SQLite (?)
+/**
+ * Generates parameterized query placeholder based on database type.
+ * @param {number} index - 1-based parameter index
+ * @returns {string} Placeholder string ('?' for SQLite, '$n' for Postgres)
+ */
 const param = (index) => dbAdapter.isSQLite() ? '?' : `$${index}`;
 
-// Store active SSE clients
+/** @type {import('http').ServerResponse[]} Active SSE client connections */
 let clients = [];
 
-// Register CORS
-fastify.register(cors, {
-  origin: '*'
-});
+fastify.register(cors, { origin: '*' });
 
-// Broadcast helper for real-time updates
+/**
+ * Broadcasts an event to all connected SSE clients.
+ * @param {string} event - Event name
+ * @param {object} data - Data payload to send
+ */
 function broadcast(event, data) {
   const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
   clients.forEach(res => res.write(payload));
@@ -22,7 +37,13 @@ function broadcast(event, data) {
 
 // ============ TASKS API ============
 
-// GET /api/tasks - List all tasks
+/**
+ * GET /api/tasks - Retrieve all tasks with optional filters.
+ * @param {object} request.query - Query parameters
+ * @param {string} [request.query.status] - Filter by task status
+ * @param {string} [request.query.agent_id] - Filter by assigned agent
+ * @returns {Array<object>} Array of task objects
+ */
 fastify.get('/api/tasks', async (request, reply) => {
   const { status, agent_id } = request.query;
   let query = 'SELECT * FROM tasks';
@@ -47,7 +68,10 @@ fastify.get('/api/tasks', async (request, reply) => {
   return rows;
 });
 
-// GET /api/stats - Dashboard stats
+/**
+ * GET /api/stats - Retrieve dashboard statistics.
+ * @returns {object} Stats object with activeAgents and tasksInQueue counts
+ */
 fastify.get('/api/stats', async (request, reply) => {
   const { rows: agentStats } = await dbAdapter.query(
     "SELECT COUNT(*) as count FROM agents WHERE status = 'working'"
@@ -63,7 +87,16 @@ fastify.get('/api/stats', async (request, reply) => {
   };
 });
 
-// POST /api/tasks - Create a task
+/**
+ * POST /api/tasks - Create a new task.
+ * @param {object} request.body - Task data
+ * @param {string} request.body.title - Task title (required)
+ * @param {string} [request.body.description] - Task description
+ * @param {string} [request.body.status='backlog'] - Initial status
+ * @param {string[]} [request.body.tags=[]] - Task tags
+ * @param {number} [request.body.agent_id] - Assigned agent ID
+ * @returns {object} Created task object
+ */
 fastify.post('/api/tasks', async (request, reply) => {
   const { title, description, status = 'backlog', tags = [], agent_id } = request.body;
   
@@ -71,7 +104,6 @@ fastify.post('/api/tasks', async (request, reply) => {
     return reply.status(400).send({ error: 'Title is required' });
   }
 
-  // For SQLite, convert tags array to JSON string
   const tagsValue = dbAdapter.isSQLite() ? JSON.stringify(tags) : tags;
 
   const { rows } = await dbAdapter.query(
@@ -86,12 +118,17 @@ fastify.post('/api/tasks', async (request, reply) => {
   return reply.status(201).send(task);
 });
 
-// PUT /api/tasks/:id - Update a task
+/**
+ * PUT /api/tasks/:id - Update an existing task.
+ * @param {object} request.params - URL parameters
+ * @param {string} request.params.id - Task ID
+ * @param {object} request.body - Fields to update
+ * @returns {object} Updated task object
+ */
 fastify.put('/api/tasks/:id', async (request, reply) => {
   const { id } = request.params;
   const { title, description, status, tags, agent_id } = request.body;
 
-  // For SQLite, convert tags array to JSON string if provided
   const tagsValue = tags !== undefined && dbAdapter.isSQLite() ? JSON.stringify(tags) : tags;
   const nowFn = dbAdapter.isSQLite() ? "datetime('now')" : 'NOW()';
 
@@ -117,7 +154,12 @@ fastify.put('/api/tasks/:id', async (request, reply) => {
   return task;
 });
 
-// DELETE /api/tasks/:id - Delete a task
+/**
+ * DELETE /api/tasks/:id - Delete a task.
+ * @param {object} request.params - URL parameters
+ * @param {string} request.params.id - Task ID
+ * @returns {object} Success response with deleted task
+ */
 fastify.delete('/api/tasks/:id', async (request, reply) => {
   const { id } = request.params;
 
@@ -134,21 +176,25 @@ fastify.delete('/api/tasks/:id', async (request, reply) => {
   return { success: true, deleted: rows[0] };
 });
 
-// Status progression map
+/** @type {Record<string, string|null>} Status progression map for task workflow */
 const STATUS_PROGRESSION = {
   'backlog': 'todo',
   'todo': 'in_progress',
   'in_progress': 'review',
   'review': 'completed',
-  'completed': null // Already at the end
+  'completed': null
 };
 
-// POST /api/tasks/:id/progress - Auto-progress task to next status
+/**
+ * POST /api/tasks/:id/progress - Advance task to next status in workflow.
+ * @param {object} request.params - URL parameters
+ * @param {string} request.params.id - Task ID
+ * @returns {object} Progress result with previous and new status
+ */
 fastify.post('/api/tasks/:id/progress', async (request, reply) => {
   const { id } = request.params;
   const nowFn = dbAdapter.isSQLite() ? "datetime('now')" : 'NOW()';
 
-  // Get current task
   const { rows: current } = await dbAdapter.query(
     `SELECT * FROM tasks WHERE id = ${param(1)}`,
     [id]
@@ -168,7 +214,6 @@ fastify.post('/api/tasks/:id/progress', async (request, reply) => {
     });
   }
 
-  // Update to next status
   const { rows } = await dbAdapter.query(
     `UPDATE tasks 
      SET status = ${param(1)}, updated_at = ${nowFn}
@@ -188,7 +233,12 @@ fastify.post('/api/tasks/:id/progress', async (request, reply) => {
   };
 });
 
-// POST /api/tasks/:id/complete - Mark task as completed directly
+/**
+ * POST /api/tasks/:id/complete - Mark task as completed directly.
+ * @param {object} request.params - URL parameters
+ * @param {string} request.params.id - Task ID
+ * @returns {object} Success response with completed task
+ */
 fastify.post('/api/tasks/:id/complete', async (request, reply) => {
   const { id } = request.params;
   const nowFn = dbAdapter.isSQLite() ? "datetime('now')" : 'NOW()';
@@ -208,21 +258,29 @@ fastify.post('/api/tasks/:id/complete', async (request, reply) => {
   const task = rows[0];
   broadcast('task-updated', task);
   
-  return {
-    success: true,
-    task
-  };
+  return { success: true, task };
 });
 
 // ============ AGENTS API ============
 
-// GET /api/agents - List all agents
+/**
+ * GET /api/agents - Retrieve all agents.
+ * @returns {Array<object>} Array of agent objects
+ */
 fastify.get('/api/agents', async (request, reply) => {
   const { rows } = await dbAdapter.query('SELECT * FROM agents ORDER BY created_at');
   return rows;
 });
 
-// POST /api/agents - Create an agent
+/**
+ * POST /api/agents - Create a new agent.
+ * @param {object} request.body - Agent data
+ * @param {string} request.body.name - Agent name (required)
+ * @param {string} [request.body.description] - Agent description
+ * @param {string} [request.body.role='Agent'] - Agent role
+ * @param {string} [request.body.status='idle'] - Initial status
+ * @returns {object} Created agent object
+ */
 fastify.post('/api/agents', async (request, reply) => {
   const { name, description, role = 'Agent', status = 'idle' } = request.body;
 
@@ -242,7 +300,13 @@ fastify.post('/api/agents', async (request, reply) => {
   return reply.status(201).send(agent);
 });
 
-// PUT /api/agents/:id - Update an agent
+/**
+ * PUT /api/agents/:id - Update an existing agent.
+ * @param {object} request.params - URL parameters
+ * @param {string} request.params.id - Agent ID
+ * @param {object} request.body - Fields to update
+ * @returns {object} Updated agent object
+ */
 fastify.put('/api/agents/:id', async (request, reply) => {
   const { id } = request.params;
   const { name, description, role, status } = request.body;
@@ -269,7 +333,13 @@ fastify.put('/api/agents/:id', async (request, reply) => {
 
 // ============ MESSAGES API ============
 
-// GET /api/messages - List messages (with optional agent_id filter)
+/**
+ * GET /api/messages - Retrieve agent messages with optional filters.
+ * @param {object} request.query - Query parameters
+ * @param {string} [request.query.agent_id] - Filter by agent ID
+ * @param {number} [request.query.limit=50] - Maximum messages to return
+ * @returns {Array<object>} Array of message objects
+ */
 fastify.get('/api/messages', async (request, reply) => {
   const { agent_id, limit = 50 } = request.query;
   
@@ -288,7 +358,13 @@ fastify.get('/api/messages', async (request, reply) => {
   return rows;
 });
 
-// POST /api/messages - Create a message
+/**
+ * POST /api/messages - Create a new message.
+ * @param {object} request.body - Message data
+ * @param {number} [request.body.agent_id] - Agent ID (optional)
+ * @param {string} request.body.message - Message content (required)
+ * @returns {object} Created message object
+ */
 fastify.post('/api/messages', async (request, reply) => {
   const { agent_id, message } = request.body;
 
@@ -308,13 +384,15 @@ fastify.post('/api/messages', async (request, reply) => {
   return reply.status(201).send(msg);
 });
 
-// ============ BOARD API (for backward compatibility) ============
+// ============ BOARD API ============
 
-// GET /api/board - Get kanban board format
+/**
+ * GET /api/board - Get tasks in Kanban board format.
+ * @returns {object} Board data with columns grouped by status
+ */
 fastify.get('/api/board', async (request, reply) => {
   const { rows } = await dbAdapter.query('SELECT * FROM tasks ORDER BY created_at');
   
-  // Group by status into columns
   const columns = [
     { title: 'Backlog', status: 'backlog', cards: [] },
     { title: 'To Do', status: 'todo', cards: [] },
@@ -341,17 +419,18 @@ fastify.get('/api/board', async (request, reply) => {
 
 // ============ SSE STREAM ============
 
-// Demo mode: randomly progress tasks
+/**
+ * Simulates work progress by advancing a random task (demo mode only).
+ * @returns {Promise<object|null>} Updated task or null if no tasks to progress
+ */
 async function simulateWorkProgress() {
   try {
-    // Get all non-completed tasks (use RANDOM() for Postgres, random() for SQLite - both work)
-    const randomFn = dbAdapter.isSQLite() ? 'RANDOM()' : 'RANDOM()';
     const { rows: tasks } = await dbAdapter.query(
-      `SELECT * FROM tasks WHERE status != 'completed' ORDER BY ${randomFn} LIMIT 1`
+      `SELECT * FROM tasks WHERE status != 'completed' ORDER BY RANDOM() LIMIT 1`
     );
 
     if (tasks.length === 0) {
-      console.log('Demo: No tasks to progress');
+      fastify.log.info('Demo: No tasks to progress');
       return null;
     }
 
@@ -370,16 +449,20 @@ async function simulateWorkProgress() {
 
       const updatedTask = rows[0];
       broadcast('task-updated', updatedTask);
-      console.log(`Demo: Task "${task.title}" progressed: ${task.status} → ${nextStatus}`);
+      fastify.log.info(`Demo: Task "${task.title}" progressed: ${task.status} → ${nextStatus}`);
       return updatedTask;
     }
   } catch (err) {
-    console.error('Demo simulation error:', err);
+    fastify.log.error(err, 'Demo simulation error');
   }
   return null;
 }
 
-// SSE Endpoint for real-time updates
+/**
+ * GET /api/stream - Server-Sent Events endpoint for real-time updates.
+ * @param {object} request.query - Query parameters
+ * @param {string} [request.query.demo='false'] - Enable demo mode auto-progression
+ */
 fastify.get('/api/stream', (req, res) => {
   const demoMode = req.query.demo === 'true';
   
@@ -391,7 +474,7 @@ fastify.get('/api/stream', (req, res) => {
   });
 
   clients.push(res.raw);
-  console.log(`Client connected${demoMode ? ' (DEMO MODE)' : ''}. Total: ${clients.length}`);
+  fastify.log.info(`Client connected${demoMode ? ' (DEMO MODE)' : ''}. Total: ${clients.length}`);
 
   // Send initial data
   Promise.all([
@@ -410,16 +493,14 @@ fastify.get('/api/stream', (req, res) => {
     res.raw.write(`:heartbeat\n\n`);
   }, 30000);
 
-  // Demo mode: simulate work by progressing random tasks every 3-8 seconds
+  // Demo mode: simulate work by progressing random tasks
   let demoInterval = null;
   if (demoMode) {
     const runDemo = () => {
       simulateWorkProgress();
-      // Random interval between 3-8 seconds for next progression
       const nextInterval = Math.floor(Math.random() * 5000) + 3000;
       demoInterval = setTimeout(runDemo, nextInterval);
     };
-    // Start first demo tick after 2 seconds
     demoInterval = setTimeout(runDemo, 2000);
     res.raw.write(`event: demo-started\ndata: ${JSON.stringify({ message: 'Demo mode active - tasks will auto-progress' })}\n\n`);
   }
@@ -428,15 +509,19 @@ fastify.get('/api/stream', (req, res) => {
     clearInterval(heartbeat);
     if (demoInterval) {
       clearTimeout(demoInterval);
-      console.log('Demo mode stopped');
+      fastify.log.info('Demo mode stopped');
     }
     clients = clients.filter(c => c !== res.raw);
-    console.log(`Client disconnected. Total: ${clients.length}`);
+    fastify.log.info(`Client disconnected. Total: ${clients.length}`);
   });
 });
 
 // ============ HEALTH CHECK ============
 
+/**
+ * GET /health - Health check endpoint.
+ * @returns {object} Health status with database connection info
+ */
 fastify.get('/health', async (request, reply) => {
   try {
     await dbAdapter.query('SELECT 1');
@@ -448,7 +533,12 @@ fastify.get('/health', async (request, reply) => {
 
 // ============ CONFIG API ============
 
-// POST /api/config/reload - Reload agents from YAML config
+/**
+ * POST /api/config/reload - Reload agents from YAML configuration.
+ * @param {object} request.body - Request body
+ * @param {boolean} [request.body.force=false] - Clear existing agents before reload
+ * @returns {object} Reload result with created/skipped counts
+ */
 fastify.post('/api/config/reload', async (request, reply) => {
   const { force = false } = request.body || {};
   
@@ -457,12 +547,10 @@ fastify.post('/api/config/reload', async (request, reply) => {
     const configPath = getConfigPath();
     
     if (force) {
-      // Force mode: Clear all agents and recreate from config
       await dbAdapter.query('DELETE FROM agents');
-      console.log('🗑️  Cleared existing agents (force mode)');
+      fastify.log.info('Cleared existing agents (force mode)');
     }
     
-    // Check existing agents
     const { rows: existing } = await dbAdapter.query('SELECT name FROM agents');
     const existingNames = new Set(existing.map(a => a.name));
     
@@ -475,7 +563,6 @@ fastify.post('/api/config/reload', async (request, reply) => {
         continue;
       }
       
-      // Use INSERT OR REPLACE for SQLite, ON CONFLICT for Postgres
       if (dbAdapter.isSQLite()) {
         await dbAdapter.query(
           `INSERT OR REPLACE INTO agents (name, description, role, status) 
@@ -495,10 +582,7 @@ fastify.post('/api/config/reload', async (request, reply) => {
       created++;
     }
     
-    // Fetch updated agents list
     const { rows: updatedAgents } = await dbAdapter.query('SELECT * FROM agents ORDER BY created_at');
-    
-    // Broadcast the update
     broadcast('agents-reloaded', { agents: updatedAgents });
     
     return {
@@ -512,7 +596,7 @@ fastify.post('/api/config/reload', async (request, reply) => {
     };
     
   } catch (err) {
-    console.error('Config reload error:', err);
+    fastify.log.error(err, 'Config reload error');
     return reply.status(500).send({ 
       success: false, 
       error: err.message 
@@ -520,7 +604,10 @@ fastify.post('/api/config/reload', async (request, reply) => {
   }
 });
 
-// GET /api/config/status - Get config file status
+/**
+ * GET /api/config/status - Get configuration file status.
+ * @returns {object} Config status with path and search locations
+ */
 fastify.get('/api/config/status', async (request, reply) => {
   const configPath = getConfigPath();
   
@@ -531,15 +618,19 @@ fastify.get('/api/config/status', async (request, reply) => {
   };
 });
 
-// ============ AUTO-SEED FROM CONFIG ============
+// ============ AUTO-SEED ============
 
+/**
+ * Seeds agents from YAML config if database is empty.
+ * @returns {Promise<void>}
+ */
 async function seedAgentsFromConfig() {
   try {
     const { rows } = await dbAdapter.query('SELECT COUNT(*) as count FROM agents');
     const count = parseInt(rows[0].count);
     
     if (count === 0) {
-      console.log('📦 No agents found in database. Seeding from config...');
+      fastify.log.info('No agents found in database. Seeding from config...');
       const agents = loadAgentsConfig();
       
       for (const agent of agents) {
@@ -548,33 +639,34 @@ async function seedAgentsFromConfig() {
            VALUES (${param(1)}, ${param(2)}, ${param(3)}, ${param(4)})`,
           [agent.name, agent.description, agent.role, agent.status]
         );
-        console.log(`   ✅ Created agent: ${agent.name} (${agent.role})`);
+        fastify.log.info(`Created agent: ${agent.name} (${agent.role})`);
       }
       
-      console.log(`📦 Seeded ${agents.length} agents from config`);
+      fastify.log.info(`Seeded ${agents.length} agents from config`);
     } else {
-      console.log(`📦 Found ${count} existing agents. Skipping seed.`);
+      fastify.log.info(`Found ${count} existing agents. Skipping seed.`);
     }
   } catch (err) {
-    console.error('Agent seeding error:', err);
-    // Don't throw - let server start anyway
+    fastify.log.error(err, 'Agent seeding error');
   }
 }
 
-// Start Server
+/**
+ * Starts the Fastify server.
+ * Verifies database connection, seeds agents if needed, and listens on configured port.
+ * @returns {Promise<void>}
+ */
 const start = async () => {
   try {
     const PORT = process.env.PORT || 3001;
     
-    // Verify database connection
     await dbAdapter.query('SELECT 1');
-    console.log(`Database connection verified (${dbAdapter.getDbType()})`);
+    fastify.log.info(`Database connection verified (${dbAdapter.getDbType()})`);
     
-    // Seed agents from YAML config if table is empty
     await seedAgentsFromConfig();
     
     await fastify.listen({ port: PORT, host: '0.0.0.0' });
-    console.log(`Server running on port ${PORT}`);
+    fastify.log.info(`Server running on port ${PORT}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

@@ -1,16 +1,17 @@
 /**
- * DEPRECATED: Use db-adapter.js instead
+ * @fileoverview Database compatibility layer (DEPRECATED).
  * 
- * This file is kept for backward compatibility with scripts that still use pool.query()
- * For new code, use: const dbAdapter = require('./db-adapter');
+ * This file is kept for backward compatibility with legacy scripts that use pool.query().
+ * New code should use db-adapter.js directly:
+ *   const dbAdapter = require('./db-adapter');
+ * 
+ * @deprecated Use db-adapter.js instead
+ * @module db
  */
 
 const dbAdapter = require('./db-adapter');
 
-// Export the db-adapter as a drop-in replacement for pg Pool
-// This provides backward compatibility for scripts using pool.query()
 module.exports = {
   query: dbAdapter.query,
-  // Add additional Pool-like methods as needed
   end: dbAdapter.close,
 };

@@ -1,23 +1,32 @@
+/**
+ * @fileoverview Agent Configuration Loader.
+ * 
+ * Loads agent definitions from a YAML configuration file. Searches multiple
+ * paths for flexibility across different deployment environments.
+ * 
+ * @module config-loader
+ */
+
 const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
 
-// Config paths - check multiple locations for flexibility
+/** @type {string[]} Paths to search for agents.yaml configuration file */
 const CONFIG_PATHS = [
-  path.join(process.cwd(), 'config', 'agents.yaml'),           // ./config/agents.yaml
-  path.join(process.cwd(), '..', '..', 'config', 'agents.yaml'), // ../../config/agents.yaml (from packages/backend)
-  '/app/config/agents.yaml',                                     // Docker mount path
-  path.join(__dirname, '..', '..', '..', 'config', 'agents.yaml') // Relative to src/
+  path.join(process.cwd(), 'config', 'agents.yaml'),
+  path.join(process.cwd(), '..', '..', 'config', 'agents.yaml'),
+  '/app/config/agents.yaml',
+  path.join(__dirname, '..', '..', '..', 'config', 'agents.yaml')
 ];
 
 /**
- * Load agents configuration from YAML file
- * @returns {Array} Array of agent objects
+ * Loads agents configuration from YAML file.
+ * Searches predefined paths and falls back to defaults if not found.
+ * @returns {Array<{name: string, description: string|null, role: string, avatar: string, status: string}>}
  */
 function loadAgentsConfig() {
   let configPath = null;
   
-  // Find the first existing config file
   for (const p of CONFIG_PATHS) {
     if (fs.existsSync(p)) {
       configPath = p;
@@ -26,23 +35,22 @@ function loadAgentsConfig() {
   }
   
   if (!configPath) {
-    console.warn('⚠️  No agents.yaml found. Searched paths:');
+    console.warn('No agents.yaml found. Searched paths:');
     CONFIG_PATHS.forEach(p => console.warn(`   - ${p}`));
-    console.warn('   Using default agents.');
+    console.warn('Using default agents.');
     return getDefaultAgents();
   }
   
   try {
-    console.log(`📄 Loading agents from: ${configPath}`);
+    console.log(`Loading agents from: ${configPath}`);
     const fileContents = fs.readFileSync(configPath, 'utf8');
     const config = yaml.load(fileContents);
     
     if (!config || !Array.isArray(config.agents)) {
-      console.warn('⚠️  Invalid agents.yaml format. Expected { agents: [...] }');
+      console.warn('Invalid agents.yaml format. Expected { agents: [...] }');
       return getDefaultAgents();
     }
     
-    // Validate and normalize agents
     const agents = config.agents.map((agent, index) => ({
       name: agent.name || `Agent ${index + 1}`,
       description: agent.description || null,
@@ -51,17 +59,18 @@ function loadAgentsConfig() {
       status: agent.status || 'idle'
     }));
     
-    console.log(`✅ Loaded ${agents.length} agents from config`);
+    console.log(`Loaded ${agents.length} agents from config`);
     return agents;
     
   } catch (err) {
-    console.error(`❌ Error loading agents.yaml: ${err.message}`);
+    console.error(`Error loading agents.yaml: ${err.message}`);
     return getDefaultAgents();
   }
 }
 
 /**
- * Default agents if no config file exists
+ * Returns default agent configuration when no config file exists.
+ * @returns {Array<{name: string, role: string, description: string, avatar: string, status: string}>}
  */
 function getDefaultAgents() {
   return [
@@ -73,7 +82,8 @@ function getDefaultAgents() {
 }
 
 /**
- * Get the path where config was loaded from (for debugging)
+ * Gets the path where configuration was loaded from.
+ * @returns {string|null} Path to config file, or null if not found
  */
 function getConfigPath() {
   for (const p of CONFIG_PATHS) {

@@ -1,3 +1,14 @@
+/**
+ * @fileoverview Agent Chat/Feed Component.
+ * 
+ * Displays a real-time feed of agent activity messages. Messages are shown
+ * in chronological order with auto-scroll behavior when near the bottom.
+ * Supports different message types (info, success, warning, error) with
+ * color-coded styling.
+ * 
+ * @module components/AgentChat
+ */
+
 import { useEffect, useRef } from 'react';
 import { MessageSquare, Bot } from 'lucide-react';
 import type { Message } from '../types';
@@ -7,6 +18,11 @@ interface AgentChatProps {
   loading?: boolean;
 }
 
+/**
+ * Formats an ISO timestamp to HH:MM format.
+ * @param timestamp - ISO timestamp string
+ * @returns Formatted time string
+ */
 function formatTimestamp(timestamp: string): string {
   try {
     const date = new Date(timestamp);
@@ -20,6 +36,7 @@ function formatTimestamp(timestamp: string): string {
   }
 }
 
+/** Color mapping for different message types */
 const typeColors: Record<string, string> = {
   info: 'text-cyber-blue',
   success: 'text-cyber-green',
@@ -27,8 +44,11 @@ const typeColors: Record<string, string> = {
   error: 'text-cyber-red',
 };
 
+/**
+ * Individual chat message showing agent name, timestamp, and content.
+ * @param props.message - Message data to display
+ */
 function ChatMessage({ message }: { message: Message }) {
-  console.log('ChatMessage render:', { message, timestampType: typeof message.timestamp, timestampVal: message.timestamp });
   const typeColor = typeColors[message.type || 'info'] || typeColors.info;
   
   return (
@@ -49,12 +69,18 @@ function ChatMessage({ message }: { message: Message }) {
   );
 }
 
+/**
+ * Main agent chat feed component with auto-scroll behavior.
+ * Automatically scrolls to new messages when user is near the bottom.
+ * 
+ * @param props.messages - Array of messages to display
+ * @param props.loading - Whether data is still loading
+ */
 export function AgentChat({ messages, loading }: AgentChatProps) {
-  console.log('AgentChat render:', { messagesCount: messages.length, messages, loading });
   const scrollRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom on new messages
+  // Auto-scroll to bottom on new messages if already near bottom
   useEffect(() => {
     if (scrollRef.current && containerRef.current) {
       const container = containerRef.current;

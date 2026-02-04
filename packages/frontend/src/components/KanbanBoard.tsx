@@ -1,3 +1,14 @@
+/**
+ * @fileoverview Kanban Board Component.
+ * 
+ * Implements a drag-and-drop Kanban board for task management using @dnd-kit.
+ * Tasks can be dragged between columns (Backlog, Todo, In Progress, Review, Completed)
+ * to update their status. Supports both desktop and mobile layouts with
+ * horizontal scrolling on mobile devices.
+ * 
+ * @module components/KanbanBoard
+ */
+
 import { useState } from 'react';
 import {
   DndContext,
@@ -20,7 +31,11 @@ import { CSS } from '@dnd-kit/utilities';
 import { Inbox, ListTodo, Eye, CheckCircle2, GripVertical, Clock, Bot, Play } from 'lucide-react';
 import type { Task, KanbanData, TaskStatus, Agent } from '../types';
 
-// Helper to format relative time
+/**
+ * Formats a date string to relative time (e.g., "5m ago", "2h ago").
+ * @param dateString - ISO date string
+ * @returns Relative time string
+ */
 function getRelativeTime(dateString?: string): string {
   if (!dateString) return '';
   
@@ -40,7 +55,7 @@ function getRelativeTime(dateString?: string): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-// Status color config for card accents
+/** Color configuration for task cards based on status */
 const statusColors: Record<TaskStatus, { border: string; glow: string }> = {
   backlog: { border: 'border-l-cyber-purple', glow: 'shadow-cyber-purple/20' },
   todo: { border: 'border-l-cyber-red', glow: 'shadow-cyber-red/20' },
@@ -56,6 +71,7 @@ interface KanbanBoardProps {
   onMoveTask: (taskId: string, newStatus: TaskStatus) => void;
 }
 
+/** Column configuration mapping status to display properties */
 const columnConfig: Record<TaskStatus, { title: string; icon: typeof Inbox; color: string }> = {
   backlog: { title: 'Backlog', icon: Inbox, color: 'cyber-purple' },
   todo: { title: 'Todo', icon: ListTodo, color: 'cyber-red' },
@@ -70,14 +86,13 @@ interface TaskCardProps {
   isDragging?: boolean;
 }
 
+/**
+ * Task card component showing title, description, assigned agent, and timestamp.
+ * @param props.task - Task data
+ * @param props.agents - Available agents for assignment lookup
+ * @param props.isDragging - Whether card is currently being dragged
+ */
 function TaskCard({ task, agents, isDragging }: TaskCardProps) {
-  console.log('TaskCard render:', { 
-    taskId: task.id, 
-    agentId: task.agentId, 
-    agentIdType: typeof task.agentId, 
-    foundAgent: agents.find(a => a.id === task.agentId),
-    agentsList: agents
-  });
   const agent = agents.find(a => a.id === task.agentId);
   const statusStyle = statusColors[task.status];
   const relativeTime = getRelativeTime(task.updatedAt || task.createdAt);
@@ -90,24 +105,21 @@ function TaskCard({ task, agents, isDragging }: TaskCardProps) {
         ${isDragging ? 'shadow-lg shadow-cyber-green/30 opacity-90 scale-[1.02]' : `hover:border-white/20 hover:${statusStyle.glow} active:scale-[0.98]`}
       `}
     >
-      {/* Drag Handle - always visible on touch devices */}
+      {/* Drag Handle */}
       <div className="absolute top-2 right-2 opacity-50 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
         <GripVertical className="w-4 h-4 text-gray-500 cursor-grab" />
       </div>
       
-      {/* Title */}
       <h4 className="text-sm font-semibold text-white pr-6 leading-tight">{task.title}</h4>
       
-      {/* Description */}
       {task.description && (
         <p className="text-xs text-gray-400 mt-1.5 line-clamp-2 leading-relaxed">
           {task.description}
         </p>
       )}
       
-      {/* Footer: Agent + Timestamp */}
+      {/* Footer: Agent Badge + Timestamp */}
       <div className="flex items-center justify-between mt-2.5 sm:mt-3 pt-2 border-t border-white/5 gap-2">
-        {/* Agent Badge */}
         {agent ? (
           <div className="flex items-center gap-1.5 min-w-0">
             <div className="w-5 h-5 sm:w-5 sm:h-5 rounded-full bg-gradient-to-br from-cyber-blue/30 to-cyber-purple/30 border border-cyber-blue/30 flex items-center justify-center flex-shrink-0">
@@ -130,7 +142,6 @@ function TaskCard({ task, agents, isDragging }: TaskCardProps) {
           </div>
         )}
         
-        {/* Timestamp */}
         {relativeTime && (
           <div className="flex items-center gap-1 text-gray-500 flex-shrink-0">
             <Clock className="w-3 h-3" />
@@ -147,6 +158,9 @@ interface SortableTaskProps {
   agents: Agent[];
 }
 
+/**
+ * Wrapper component that makes TaskCard sortable via dnd-kit.
+ */
 function SortableTask({ task, agents }: SortableTaskProps) {
   const {
     attributes,
@@ -176,6 +190,9 @@ interface KanbanColumnProps {
   agents: Agent[];
 }
 
+/**
+ * Kanban column component that serves as a drop zone for tasks.
+ */
 function KanbanColumn({ status, tasks, agents }: KanbanColumnProps) {
   const config = columnConfig[status];
   const Icon = config.icon;
@@ -217,8 +234,16 @@ function KanbanColumn({ status, tasks, agents }: KanbanColumnProps) {
   );
 }
 
+/**
+ * Main Kanban board component with drag-and-drop functionality.
+ * Renders five columns and handles task movement between them.
+ * 
+ * @param props.kanban - Kanban data with tasks grouped by status
+ * @param props.agents - Available agents for assignment display
+ * @param props.loading - Whether data is still loading
+ * @param props.onMoveTask - Callback when task is moved to new column
+ */
 export function KanbanBoard({ kanban, agents, loading, onMoveTask }: KanbanBoardProps) {
-  console.log('KanbanBoard render:', { kanbanKeys: Object.keys(kanban), agentsCount: agents.length, agents });
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
   const sensors = useSensors(
@@ -248,13 +273,13 @@ export function KanbanBoard({ kanban, agents, loading, onMoveTask }: KanbanBoard
     const task = allTasks.find(t => t.id === taskId);
     if (!task) return;
 
-    // Check if dropped on a column
     let newStatus: TaskStatus | null = null;
     
+    // Check if dropped directly on a column
     if (columns.includes(over.id as TaskStatus)) {
       newStatus = over.id as TaskStatus;
     } else {
-      // Dropped on another task - find which column it's in
+      // Dropped on another task - use that task's column
       const overTask = allTasks.find(t => t.id === over.id);
       if (overTask) {
         newStatus = overTask.status;
@@ -269,7 +294,6 @@ export function KanbanBoard({ kanban, agents, loading, onMoveTask }: KanbanBoard
   if (loading) {
     return (
       <div className="h-full p-2 sm:p-4">
-        {/* Mobile: horizontal scroll skeleton */}
         <div className="flex md:grid md:grid-cols-5 gap-2 sm:gap-4 h-full overflow-x-auto md:overflow-x-hidden snap-x snap-mandatory pb-2 md:pb-0">
           {[1, 2, 3, 4, 5].map(i => (
             <div key={i} className="bg-black/30 rounded-xl animate-pulse min-w-[280px] sm:min-w-[300px] md:min-w-0 snap-center" />

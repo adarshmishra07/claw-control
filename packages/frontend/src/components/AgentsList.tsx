@@ -1,3 +1,13 @@
+/**
+ * @fileoverview Agents List Component.
+ * 
+ * Displays a list of AI agents with their status indicators.
+ * Shows agent name, description, and current status (working/idle/offline)
+ * with visual indicators including pulsing animation for active agents.
+ * 
+ * @module components/AgentsList
+ */
+
 import { Bot, Circle } from 'lucide-react';
 import type { Agent, AgentStatus } from '../types';
 
@@ -6,12 +16,17 @@ interface AgentsListProps {
   loading?: boolean;
 }
 
+/** Status display configuration mapping status to visual properties */
 const statusConfig: Record<AgentStatus, { color: string; label: string; pulse: boolean }> = {
   working: { color: 'bg-cyber-green', label: 'Working', pulse: true },
   idle: { color: 'bg-cyber-yellow', label: 'Idle', pulse: false },
   offline: { color: 'bg-cyber-red', label: 'Offline', pulse: false },
 };
 
+/**
+ * Status indicator dot with optional pulse animation.
+ * @param props.status - Agent's current status
+ */
 function StatusIndicator({ status }: { status: AgentStatus }) {
   const config = statusConfig[status] || statusConfig.offline;
   
@@ -36,6 +51,10 @@ function StatusIndicator({ status }: { status: AgentStatus }) {
   );
 }
 
+/**
+ * Individual agent card showing avatar, name, description, and status.
+ * @param props.agent - Agent data to display
+ */
 function AgentCard({ agent }: { agent: Agent }) {
   return (
     <div className="p-3 sm:p-3 bg-cyber-dark/50 border border-cyber-green/20 rounded-lg hover:border-cyber-green/40 active:border-cyber-green/50 transition-colors group touch-manipulation">
@@ -63,6 +82,13 @@ function AgentCard({ agent }: { agent: Agent }) {
   );
 }
 
+/**
+ * Main agents list component with loading state and empty state handling.
+ * Renders as a grid on mobile and list on desktop.
+ * 
+ * @param props.agents - Array of agents to display
+ * @param props.loading - Whether data is still loading
+ */
 export function AgentsList({ agents, loading }: AgentsListProps) {
   if (loading) {
     return (
@@ -91,7 +117,6 @@ export function AgentsList({ agents, loading }: AgentsListProps) {
           <span className="ml-auto text-[10px] font-mono text-cyber-green/50">{agents.length}</span>
         </h2>
       </div>
-      {/* Mobile: grid layout for better use of space, Desktop: list */}
       <div className="flex-1 overflow-y-auto p-2 sm:p-3">
         {agents.length === 0 ? (
           <div className="text-center text-gray-500 py-8 text-sm">

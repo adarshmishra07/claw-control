@@ -1,8 +1,20 @@
+/**
+ * @fileoverview Database Migration Script.
+ * 
+ * Creates the required database schema for Claw Control. Supports both
+ * PostgreSQL and SQLite databases. Run this script to initialize or
+ * update the database schema.
+ * 
+ * Usage: node migrate.js
+ * 
+ * @module migrate
+ */
+
 const fs = require('fs');
 const path = require('path');
 const dbAdapter = require('./db-adapter');
 
-// PostgreSQL migration
+/** PostgreSQL schema migration SQL */
 const pgMigration = `
 -- Create agents table
 CREATE TABLE IF NOT EXISTS agents (
@@ -60,23 +72,25 @@ BEGIN
 END $$;
 `;
 
+/**
+ * Runs the database migration.
+ * Detects database type and applies appropriate schema.
+ * @returns {Promise<void>}
+ */
 async function migrate() {
   const dbType = dbAdapter.getDbType();
   console.log(`Running database migration (${dbType})...`);
   
   try {
     if (dbAdapter.isSQLite()) {
-      // Load and run SQLite schema
       const schemaPath = path.join(__dirname, 'sqlite-schema.sql');
       const sqliteSchema = fs.readFileSync(schemaPath, 'utf8');
       
-      // Use db.exec() which can handle multiple statements
       const db = dbAdapter.getDb();
       try {
         db.exec(sqliteSchema);
         console.log('SQLite schema created successfully!');
       } catch (err) {
-        // If exec fails (e.g., table already exists), try statement by statement
         console.log('Trying statement-by-statement execution...');
         const statements = sqliteSchema
           .split(';')
@@ -87,7 +101,6 @@ async function migrate() {
           try {
             db.exec(stmt + ';');
           } catch (stmtErr) {
-            // Ignore "already exists" errors
             if (!stmtErr.message.includes('already exists')) {
               console.warn(`  Warning: ${stmtErr.message}`);
             }
@@ -96,12 +109,10 @@ async function migrate() {
       }
       console.log('SQLite migration completed successfully!');
     } else {
-      // PostgreSQL migration
       await dbAdapter.query(pgMigration);
       console.log('PostgreSQL migration completed successfully!');
     }
     
-    // Check if we have any agents, if not create a default one
     const { rows } = await dbAdapter.query('SELECT COUNT(*) as count FROM agents');
     const count = parseInt(rows[0].count);
     

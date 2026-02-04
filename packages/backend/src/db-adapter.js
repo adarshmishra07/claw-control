@@ -1,15 +1,18 @@
 /**
- * Database Adapter - Supports both PostgreSQL and SQLite
+ * @fileoverview Database Adapter - Unified interface for PostgreSQL and SQLite.
  * 
- * Auto-detects based on DATABASE_URL:
+ * Auto-detects database type from DATABASE_URL environment variable:
  * - sqlite:./path/to/file.db → SQLite (better-sqlite3)
  * - postgresql://... → PostgreSQL (pg)
+ * 
+ * Provides a unified query interface that returns { rows: [...] } for compatibility.
+ * 
+ * @module db-adapter
  */
 
 const path = require('path');
 const fs = require('fs');
 
-// Determine database type from DATABASE_URL
 const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://localhost/claw_control';
 const IS_SQLITE = DATABASE_URL.startsWith('sqlite:');
 
@@ -17,23 +20,20 @@ let db;
 let dbType;
 
 if (IS_SQLITE) {
-  // SQLite mode
   const Database = require('better-sqlite3');
   const dbPath = DATABASE_URL.replace('sqlite:', '');
   const absolutePath = path.isAbsolute(dbPath) ? dbPath : path.resolve(process.cwd(), dbPath);
   
-  // Ensure directory exists
   const dir = path.dirname(absolutePath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
   
   db = new Database(absolutePath);
-  db.pragma('journal_mode = WAL'); // Better concurrent performance
+  db.pragma('journal_mode = WAL');
   dbType = 'sqlite';
   console.log(`Connected to SQLite database: ${absolutePath}`);
 } else {
-  // PostgreSQL mode
   const { Pool } = require('pg');
   db = new Pool({
     connectionString: DATABASE_URL,
@@ -55,115 +55,48 @@ if (IS_SQLITE) {
 }
 
 /**
- * Convert PostgreSQL-style parameterized query ($1, $2) to SQLite style (?, ?)
+ * Converts PostgreSQL-style parameterized query ($1, $2) to SQLite style (?, ?).
+ * @param {string} query - SQL query string
+ * @param {Array} params - Query parameters
+ * @returns {object} Converted query and params
  */
 function convertParams(query, params) {
   if (!IS_SQLITE) return { query, params };
   
-  let paramIndex = 0;
-  const convertedQuery = query.replace(/\$(\d+)/g, () => {
-    paramIndex++;
-    return '?';
-  });
-  
+  const convertedQuery = query.replace(/\$(\d+)/g, () => '?');
   return { query: convertedQuery, params };
 }
 
 /**
- * Handle PostgreSQL-specific syntax for SQLite
+ * Converts PostgreSQL-specific SQL syntax to SQLite equivalents.
+ * @param {string} query - SQL query string
+ * @returns {string} Converted query
  */
 function convertQuery(query) {
   if (!IS_SQLITE) return query;
   
   let converted = query;
   
-  // Convert NOW() to datetime('now')
   converted = converted.replace(/NOW\(\)/gi, "datetime('now')");
-  
-  // Convert COALESCE - works the same in both
-  // Convert SERIAL PRIMARY KEY to INTEGER PRIMARY KEY AUTOINCREMENT
   converted = converted.replace(/SERIAL PRIMARY KEY/gi, 'INTEGER PRIMARY KEY AUTOINCREMENT');
-  
-  // Convert TEXT[] to TEXT (we'll store arrays as JSON)
   converted = converted.replace(/TEXT\[\]/g, 'TEXT');
   converted = converted.replace(/DEFAULT '\{\}'/g, "DEFAULT '[]'");
-  
-  // Convert VARCHAR(n) to TEXT (SQLite doesn't care about length)
   converted = converted.replace(/VARCHAR\(\d+\)/gi, 'TEXT');
-  
-  // Convert TIMESTAMP to TEXT (SQLite stores as ISO strings)
   converted = converted.replace(/TIMESTAMP/gi, 'TEXT');
-  
-  // Remove REFERENCES clauses (SQLite supports them but we'll keep it simple)
-  // Actually, let's keep them for referential integrity
-  
-  // Convert ON DELETE CASCADE/SET NULL - SQLite supports this
   
   return converted;
 }
 
 /**
- * Unified query interface
- * Returns { rows: [...] } for compatibility with pg
- */
-async function query(sql, params = []) {
-  const { query: convertedQuery, params: convertedParams } = convertParams(sql, params);
-  const finalQuery = convertQuery(convertedQuery);
-  
-  if (IS_SQLITE) {
-    try {
-      // Determine if it's a SELECT or modifying query
-      const isSelect = finalQuery.trim().toUpperCase().startsWith('SELECT');
-      const isReturning = finalQuery.toUpperCase().includes('RETURNING');
-      
-      if (isSelect) {
-        const stmt = db.prepare(finalQuery);
-        const rows = stmt.all(...convertedParams);
-        // Convert JSON strings back to arrays for tags field
-        return { rows: rows.map(row => deserializeRow(row)) };
-      } else if (isReturning) {
-        // For INSERT/UPDATE/DELETE with RETURNING
-        const stmt = db.prepare(finalQuery);
-        const result = stmt.get(...convertedParams);
-        return { rows: result ? [deserializeRow(result)] : [] };
-      } else {
-        // For INSERT/UPDATE/DELETE without RETURNING
-        const stmt = db.prepare(finalQuery);
-        const info = stmt.run(...convertedParams);
-        return { rows: [], changes: info.changes, lastInsertRowid: info.lastInsertRowid };
-      }
-    } catch (err) {
-      console.error('SQLite query error:', err.message);
-      console.error('Query:', finalQuery);
-      console.error('Params:', convertedParams);
-      throw err;
-    }
-  } else {
-    // PostgreSQL
-    const result = await db.query(sql, params);
-    return result;
-  }
-}
-
-/**
- * Serialize row data for SQLite (arrays → JSON strings)
- */
-function serializeValue(value, key) {
-  if (Array.isArray(value)) {
-    return JSON.stringify(value);
-  }
-  return value;
-}
-
-/**
- * Deserialize row data from SQLite (JSON strings → arrays)
+ * Deserializes row data from SQLite (converts JSON strings to arrays for tags field).
+ * @param {object} row - Database row object
+ * @returns {object} Deserialized row
  */
 function deserializeRow(row) {
   if (!row) return row;
   
   const deserialized = { ...row };
   
-  // Handle tags field (stored as JSON in SQLite)
   if (typeof deserialized.tags === 'string') {
     try {
       deserialized.tags = JSON.parse(deserialized.tags);
@@ -176,20 +109,62 @@ function deserializeRow(row) {
 }
 
 /**
- * Run migration SQL
+ * Executes a SQL query with unified interface.
+ * Returns { rows: [...] } for compatibility with pg Pool.
+ * @param {string} sql - SQL query string
+ * @param {Array} [params=[]] - Query parameters
+ * @returns {Promise<{rows: Array, changes?: number, lastInsertRowid?: number}>}
+ */
+async function query(sql, params = []) {
+  const { query: convertedQuery, params: convertedParams } = convertParams(sql, params);
+  const finalQuery = convertQuery(convertedQuery);
+  
+  if (IS_SQLITE) {
+    try {
+      const isSelect = finalQuery.trim().toUpperCase().startsWith('SELECT');
+      const isReturning = finalQuery.toUpperCase().includes('RETURNING');
+      
+      if (isSelect) {
+        const stmt = db.prepare(finalQuery);
+        const rows = stmt.all(...convertedParams);
+        return { rows: rows.map(row => deserializeRow(row)) };
+      } else if (isReturning) {
+        const stmt = db.prepare(finalQuery);
+        const result = stmt.get(...convertedParams);
+        return { rows: result ? [deserializeRow(result)] : [] };
+      } else {
+        const stmt = db.prepare(finalQuery);
+        const info = stmt.run(...convertedParams);
+        return { rows: [], changes: info.changes, lastInsertRowid: info.lastInsertRowid };
+      }
+    } catch (err) {
+      console.error('SQLite query error:', err.message);
+      console.error('Query:', finalQuery);
+      console.error('Params:', convertedParams);
+      throw err;
+    }
+  } else {
+    const result = await db.query(sql, params);
+    return result;
+  }
+}
+
+/**
+ * Runs migration SQL statements.
+ * Handles splitting and converting PostgreSQL migrations for SQLite.
+ * @param {string} sql - Migration SQL
+ * @returns {Promise<void>}
  */
 async function runMigration(sql) {
   if (IS_SQLITE) {
-    // Split by semicolons and run each statement
     const statements = sql
       .split(';')
       .map(s => s.trim())
       .filter(s => s.length > 0)
-      .filter(s => !s.startsWith('DO $$')); // Skip PostgreSQL-specific DO blocks
+      .filter(s => !s.startsWith('DO $$'));
     
     for (const stmt of statements) {
       const converted = convertQuery(stmt);
-      // Skip PostgreSQL-specific syntax that can't be converted
       if (converted.includes('information_schema') || converted.includes('ALTER TABLE')) {
         console.log('  Skipping PostgreSQL-specific statement');
         continue;
@@ -197,7 +172,6 @@ async function runMigration(sql) {
       try {
         db.exec(converted);
       } catch (err) {
-        // Ignore "table already exists" errors
         if (!err.message.includes('already exists')) {
           console.error('Migration statement error:', err.message);
           console.error('Statement:', converted);
@@ -210,7 +184,8 @@ async function runMigration(sql) {
 }
 
 /**
- * Close database connection
+ * Closes the database connection.
+ * @returns {Promise<void>}
  */
 async function close() {
   if (IS_SQLITE) {
@@ -221,27 +196,29 @@ async function close() {
 }
 
 /**
- * Get underlying database instance (for advanced usage)
+ * Returns the underlying database instance for advanced usage.
+ * @returns {object} Database instance (better-sqlite3 Database or pg Pool)
  */
 function getDb() {
   return db;
 }
 
 /**
- * Get database type
+ * Returns the current database type.
+ * @returns {string} 'sqlite' or 'postgres'
  */
 function getDbType() {
   return dbType;
 }
 
 /**
- * Check if using SQLite
+ * Checks if using SQLite database.
+ * @returns {boolean} True if SQLite, false if PostgreSQL
  */
 function isSQLite() {
   return IS_SQLITE;
 }
 
-// Export unified interface
 module.exports = {
   query,
   runMigration,
@@ -249,6 +226,5 @@ module.exports = {
   getDb,
   getDbType,
   isSQLite,
-  // Alias for backward compatibility with pg Pool
   pool: { query }
 };

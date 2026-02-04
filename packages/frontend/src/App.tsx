@@ -1,3 +1,19 @@
+/**
+ * @fileoverview Main Application Component.
+ * 
+ * Root component for Claw Control dashboard. Implements a responsive layout with:
+ * - Header with connection status indicator
+ * - Agents list sidebar (left panel)
+ * - Kanban board (center)
+ * - Agent chat/feed (right panel)
+ * - Mobile navigation with tab switching
+ * 
+ * Manages real-time state updates via SSE and coordinates data flow
+ * between child components.
+ * 
+ * @module App
+ */
+
 import { useCallback, useState } from 'react';
 import { Radio, Wifi, WifiOff, Bot, LayoutGrid, MessageSquare } from 'lucide-react';
 import { AgentsList } from './components/AgentsList';
@@ -6,8 +22,13 @@ import { AgentChat } from './components/AgentChat';
 import { useAgents, useTasks, useMessages, useSSE, transformAgent, transformTask } from './hooks/useApi';
 import type { Agent, Task, Message, TaskStatus } from './types';
 
+/** Mobile view tab options */
 type MobileView = 'agents' | 'board' | 'chat';
 
+/**
+ * Application header with logo and connection status.
+ * @param props.connected - Whether SSE connection is active
+ */
 function Header({ connected }: { connected: boolean }) {
   return (
     <header className="h-12 sm:h-14 px-3 sm:px-4 border-b border-cyber-green/30 bg-black/50 flex items-center justify-between backdrop-blur-sm">
@@ -44,6 +65,10 @@ interface MobileNavProps {
   messageCount: number;
 }
 
+/**
+ * Bottom navigation bar for mobile devices.
+ * Provides tab switching between Agents, Board, and Chat views.
+ */
 function MobileNav({ activeView, onViewChange, agentCount, messageCount }: MobileNavProps) {
   const tabs = [
     { id: 'agents' as MobileView, icon: Bot, label: 'Agents', count: agentCount },
@@ -84,13 +109,17 @@ function MobileNav({ activeView, onViewChange, agentCount, messageCount }: Mobil
   );
 }
 
+/**
+ * Main application component.
+ * Orchestrates data fetching, SSE subscriptions, and renders the dashboard layout.
+ */
 export default function App() {
   const [mobileView, setMobileView] = useState<MobileView>('board');
   const { agents, setAgents, loading: agentsLoading } = useAgents();
   const { kanban, loading: tasksLoading, moveTask, setTasks } = useTasks();
   const { messages, loading: messagesLoading, addMessage } = useMessages();
 
-  // SSE handlers
+  // SSE event handlers for real-time updates
   const handleAgentUpdate = useCallback((agent: Agent, _action?: 'created' | 'updated') => {
     setAgents(prev => {
       const idx = prev.findIndex(a => a.id === agent.id);
@@ -99,7 +128,6 @@ export default function App() {
         next[idx] = { ...next[idx], ...agent };
         return next;
       }
-      // New agent - add to list
       return [...prev, agent];
     });
   }, [setAgents]);
@@ -118,7 +146,6 @@ export default function App() {
         next[idx] = { ...next[idx], ...fullTask };
         return next;
       }
-      // New task - add to list
       return [...prev, fullTask];
     });
   }, [setTasks]);
@@ -149,12 +176,10 @@ export default function App() {
       
       {/* Desktop Layout (md+) */}
       <main className="flex-1 hidden md:flex overflow-hidden">
-        {/* Left Panel - Agents List */}
         <aside className="w-56 lg:w-64 border-r border-cyber-green/20 bg-black/30 flex-shrink-0 overflow-hidden">
           <AgentsList agents={agents} loading={agentsLoading} />
         </aside>
 
-        {/* Main Area - Kanban Board */}
         <section className="flex-1 overflow-hidden">
           <KanbanBoard 
             kanban={kanban} 
@@ -164,7 +189,6 @@ export default function App() {
           />
         </section>
 
-        {/* Right Panel - Agent Chat */}
         <aside className="w-72 lg:w-80 border-l border-cyber-blue/20 bg-black/30 flex-shrink-0 overflow-hidden">
           <AgentChat messages={messages} loading={messagesLoading} />
         </aside>
@@ -172,12 +196,10 @@ export default function App() {
 
       {/* Mobile Layout (below md) */}
       <main className="flex-1 md:hidden overflow-hidden pb-14">
-        {/* Agents View */}
         <div className={`h-full overflow-hidden ${mobileView === 'agents' ? 'block' : 'hidden'}`}>
           <AgentsList agents={agents} loading={agentsLoading} />
         </div>
 
-        {/* Kanban Board View */}
         <div className={`h-full overflow-hidden ${mobileView === 'board' ? 'block' : 'hidden'}`}>
           <KanbanBoard 
             kanban={kanban} 
@@ -187,13 +209,11 @@ export default function App() {
           />
         </div>
 
-        {/* Chat View */}
         <div className={`h-full overflow-hidden ${mobileView === 'chat' ? 'block' : 'hidden'}`}>
           <AgentChat messages={messages} loading={messagesLoading} />
         </div>
       </main>
 
-      {/* Mobile Navigation */}
       <MobileNav 
         activeView={mobileView} 
         onViewChange={setMobileView}

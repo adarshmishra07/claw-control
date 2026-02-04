@@ -1,5 +1,16 @@
+/**
+ * @fileoverview Type definitions for Claw Control frontend.
+ * 
+ * Defines TypeScript interfaces for tasks, agents, messages, and the
+ * Kanban board data structure used throughout the application.
+ * 
+ * @module types
+ */
+
+/** Valid task status values representing Kanban columns */
 export type TaskStatus = 'backlog' | 'todo' | 'in_progress' | 'review' | 'completed';
 
+/** Task entity representing a work item on the Kanban board */
 export interface Task {
   id: string;
   title: string;
@@ -10,8 +21,10 @@ export interface Task {
   updatedAt?: string;
 }
 
+/** Valid agent status values */
 export type AgentStatus = 'idle' | 'working' | 'offline';
 
+/** Agent entity representing an AI agent in the system */
 export interface Agent {
   id: string;
   name: string;
@@ -20,6 +33,7 @@ export interface Agent {
   avatar?: string;
 }
 
+/** Message entity representing an agent's activity log entry */
 export interface Message {
   id: string;
   agentId: string;
@@ -29,6 +43,7 @@ export interface Message {
   type?: 'info' | 'success' | 'warning' | 'error';
 }
 
+/** Kanban board data structure with tasks grouped by status */
 export interface KanbanData {
   backlog: Task[];
   todo: Task[];
