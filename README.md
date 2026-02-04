@@ -109,10 +109,16 @@ PORT=3001
 API_KEY=your-secret-key-here
 ```
 
-**Frontend (`packages/frontend/.env`)**
+**Frontend (`packages/frontend/.env`)** ⚠️ **Required**
 ```env
-VITE_API_URL=http://localhost:3001
+# REQUIRED: URL of your backend API
+API_URL=http://localhost:3001
+
+# For production, use your deployed backend URL:
+# API_URL=https://your-backend.railway.app
 ```
+
+> **Note:** The frontend MUST have `API_URL` set to connect to the backend. Without it, the dashboard won't load data.
 
 ### API Authentication (Optional)
 
