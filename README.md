@@ -237,7 +237,45 @@ VITE_API_URL=http://localhost:3001
 
 ## 🤝 Integration
 
-Claw Control exposes a simple REST API that any AI agent can use:
+### MCP (Model Context Protocol)
+
+Claw Control includes an MCP server for native AI agent integration. Claude and other MCP-compatible agents can interact with Mission Control directly.
+
+**Available Tools:**
+- `list_tasks` - Get all tasks (with optional status filter)
+- `create_task` - Create a new task
+- `update_task` - Update task status/details
+- `list_agents` - Get all agents
+- `update_agent_status` - Change agent status
+- `post_message` - Post to agent feed
+
+**MCP Configuration:**
+
+Add to your Claude Desktop config (`claude_desktop_config.json`) or MCP client:
+
+```json
+{
+  "mcpServers": {
+    "claw-control": {
+      "command": "node",
+      "args": ["packages/backend/src/mcp-server.js"],
+      "env": {
+        "DATABASE_URL": "sqlite:./data/claw.db"
+      }
+    }
+  }
+}
+```
+
+Or run directly:
+```bash
+cd packages/backend
+npm run mcp
+```
+
+### REST API
+
+Claw Control also exposes a simple REST API that any AI agent can use:
 
 ```javascript
 // Update agent status
