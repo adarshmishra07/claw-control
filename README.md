@@ -10,6 +10,7 @@
 [![Fastify](https://img.shields.io/badge/Fastify-5.x-000000?style=flat-square&logo=fastify&logoColor=white)](https://fastify.dev/)
 ![Status](https://img.shields.io/badge/status-alpha-orange?style=flat-square)
 
+[![ClawHub](https://img.shields.io/badge/ClawHub-Install-blue?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48dGV4dCB5PSIxOCIgZm9udC1zaXplPSIxOCI+8J+mnjwvdGV4dD48L3N2Zz4=)](https://clawhub.ai/adarshmishra07/claw-control)
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/_odwJ4?referralCode=VsZvQs)
 
 Claw Control is a beautiful, real-time mission control dashboard for managing AI agent workflows. Track tasks, monitor agent status, and coordinate your AI team through an intuitive Kanban interface with live updates.
@@ -144,6 +145,7 @@ docker-compose -f docker-compose.yml -f docker-compose.sqlite.yml up -d --scale 
 
 ### Option 4: Railway (One-Click Cloud Deploy)
 
+[![ClawHub](https://img.shields.io/badge/ClawHub-Install-blue?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48dGV4dCB5PSIxOCIgZm9udC1zaXplPSIxOCI+8J+mnjwvdGV4dD48L3N2Zz4=)](https://clawhub.ai/adarshmishra07/claw-control)
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/_odwJ4?referralCode=VsZvQs)
 
 Deploy to Railway with zero configuration. See the full [Railway Template Guide](docs/railway-template.md) for details.
