@@ -10,10 +10,13 @@
 
 const fastify = require('fastify')({ logger: true });
 const cors = require('@fastify/cors');
+const swagger = require('@fastify/swagger');
+const swaggerUi = require('@fastify/swagger-ui');
 const dbAdapter = require('./db-adapter');
 const { loadAgentsConfig, getConfigPath, CONFIG_PATHS } = require('./config-loader');
 const { dispatchWebhook, reloadWebhooks, getWebhooks, SUPPORTED_EVENTS } = require('./webhook');
 const { withAuth, isAuthEnabled } = require('./auth');
+const packageJson = require('../package.json');
 
 /**
  * Generates parameterized query placeholder based on database type.
@@ -27,6 +30,112 @@ let clients = [];
 
 fastify.register(cors, { origin: '*' });
 
+// OpenAPI/Swagger Documentation
+fastify.register(swagger, {
+  openapi: {
+    info: {
+      title: 'Claw Control API',
+      description: 'Kanban for AI Agents',
+      version: packageJson.version
+    },
+    servers: [
+      { url: '/', description: 'Current server' }
+    ],
+    tags: [
+      { name: 'Tasks', description: 'Task management endpoints' },
+      { name: 'Agents', description: 'Agent management endpoints' },
+      { name: 'Messages', description: 'Agent message endpoints' },
+      { name: 'Config', description: 'Configuration management endpoints' },
+      { name: 'Auth', description: 'Authentication endpoints' },
+      { name: 'Webhooks', description: 'Webhook management endpoints' },
+      { name: 'Board', description: 'Kanban board endpoints' },
+      { name: 'Stream', description: 'Real-time SSE streaming' },
+      { name: 'Health', description: 'Health check endpoints' }
+    ],
+    components: {
+      securitySchemes: {
+        apiKey: {
+          type: 'apiKey',
+          name: 'x-api-key',
+          in: 'header',
+          description: 'API key for write operations'
+        }
+      }
+    }
+  }
+});
+
+fastify.register(swaggerUi, {
+  routePrefix: '/docs',
+  uiConfig: {
+    docExpansion: 'list',
+    deepLinking: true
+  }
+});
+
+// Register shared schemas for $ref usage in route schemas
+fastify.addSchema({
+  $id: 'Task',
+  type: 'object',
+  properties: {
+    id: { type: 'integer', description: 'Unique task identifier' },
+    title: { type: 'string', description: 'Task title' },
+    description: { type: 'string', nullable: true, description: 'Task description' },
+    status: { 
+      type: 'string', 
+      enum: ['backlog', 'todo', 'in_progress', 'review', 'completed'],
+      description: 'Task status' 
+    },
+    agent_id: { type: 'integer', nullable: true, description: 'Assigned agent ID' },
+    tags: { 
+      type: 'array', 
+      items: { type: 'string' },
+      description: 'Task tags' 
+    },
+    created_at: { type: 'string', format: 'date-time', description: 'Creation timestamp' },
+    updated_at: { type: 'string', format: 'date-time', description: 'Last update timestamp' }
+  }
+});
+
+fastify.addSchema({
+  $id: 'Agent',
+  type: 'object',
+  properties: {
+    id: { type: 'integer', description: 'Unique agent identifier' },
+    name: { type: 'string', description: 'Agent name' },
+    description: { type: 'string', nullable: true, description: 'Agent description' },
+    role: { type: 'string', description: 'Agent role' },
+    avatar: { type: 'string', nullable: true, description: 'Agent avatar URL' },
+    status: { 
+      type: 'string', 
+      enum: ['idle', 'working', 'error', 'offline'],
+      description: 'Agent status' 
+    },
+    created_at: { type: 'string', format: 'date-time', description: 'Creation timestamp' }
+  }
+});
+
+fastify.addSchema({
+  $id: 'Message',
+  type: 'object',
+  properties: {
+    id: { type: 'integer', description: 'Unique message identifier' },
+    agent_id: { type: 'integer', nullable: true, description: 'Agent ID who sent the message' },
+    message: { type: 'string', description: 'Message content' },
+    agent_name: { type: 'string', nullable: true, description: 'Agent name (joined)' },
+    created_at: { type: 'string', format: 'date-time', description: 'Message timestamp' }
+  }
+});
+
+fastify.addSchema({
+  $id: 'Error',
+  type: 'object',
+  properties: {
+    error: { type: 'string', description: 'Error message' },
+    success: { type: 'boolean', description: 'Success flag (false for errors)' }
+  }
+});
+
 /**
  * Broadcasts an event to all connected SSE clients.
  * @param {string} event - Event name
@@ -37,6 +146,9 @@ function broadcast(event, data) {
   clients.forEach(res => res.write(payload));
 }
 
+// Register all API routes as a plugin for Swagger to detect them
+fastify.register(async function routes(fastify) {
+
 // ============ TASKS API ============
 
 /**
@@ -46,7 +158,25 @@ function broadcast(event, data) {
  * @param {string} [request.query.agent_id] - Filter by assigned agent
  * @returns {Array<object>} Array of task objects
  */
-fastify.get('/api/tasks', async (request, reply) => {
+fastify.get('/api/tasks', {
+  schema: {
+    description: 'Retrieve all tasks with optional filters',
+    tags: ['Tasks'],
+    querystring: {
+      type: 'object',
+      properties: {
+        status: { type: 'string', enum: ['backlog', 'todo', 'in_progress', 'review', 'completed'] },
+        agent_id: { type: 'integer' }
+      }
+    },
+    response: {
+      200: {
+        type: 'array',
+        items: { $ref: 'Task#' }
+      }
+    }
+  }
+}, async (request, reply) => {
   const { status, agent_id } = request.query;
   let query = 'SELECT * FROM tasks';
   const params = [];
@@ -74,7 +204,21 @@ fastify.get('/api/tasks', async (request, reply) => {
  * GET /api/stats - Retrieve dashboard statistics.
  * @returns {object} Stats object with activeAgents and tasksInQueue counts
  */
-fastify.get('/api/stats', async (request, reply) => {
+fastify.get('/api/stats', {
+  schema: {
+    description: 'Retrieve dashboard statistics',
+    tags: ['Tasks'],
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          activeAgents: { type: 'integer', description: 'Number of agents currently working' },
+          tasksInQueue: { type: 'integer', description: 'Tasks in backlog or todo status' }
+        }
+      }
+    }
+  }
+}, async (request, reply) => {
   const { rows: agentStats } = await dbAdapter.query(
     "SELECT COUNT(*) as count FROM agents WHERE status = 'working'"
   );
@@ -99,7 +243,29 @@ fastify.get('/api/stats', async (request, reply) => {
  * @param {number} [request.body.agent_id] - Assigned agent ID
  * @returns {object} Created task object
  */
-fastify.post('/api/tasks', { ...withAuth }, async (request, reply) => {
+fastify.post('/api/tasks', {
+  ...withAuth,
+  schema: {
+    description: 'Create a new task',
+    tags: ['Tasks'],
+    security: [{ apiKey: [] }],
+    body: {
+      type: 'object',
+      required: ['title'],
+      properties: {
+        title: { type: 'string', description: 'Task title (required)' },
+        description: { type: 'string', description: 'Task description' },
+        status: { type: 'string', enum: ['backlog', 'todo', 'in_progress', 'review', 'completed'], default: 'backlog' },
+        tags: { type: 'array', items: { type: 'string' }, default: [] },
+        agent_id: { type: 'integer', description: 'Assigned agent ID' }
+      }
+    },
+    response: {
+      201: { $ref: 'Task#' },
+      400: { $ref: 'Error#' }
+    }
+  }
+}, async (request, reply) => {
   const { title, description, status = 'backlog', tags = [], agent_id } = request.body;
   
   if (!title) {
@@ -128,7 +294,34 @@ fastify.post('/api/tasks', { ...withAuth }, async (request, reply) => {
  * @param {object} request.body - Fields to update
  * @returns {object} Updated task object
  */
-fastify.put('/api/tasks/:id', { ...withAuth }, async (request, reply) => {
+fastify.put('/api/tasks/:id', {
+  ...withAuth,
+  schema: {
+    description: 'Update an existing task',
+    tags: ['Tasks'],
+    security: [{ apiKey: [] }],
+    params: {
+      type: 'object',
+      properties: {
+        id: { type: 'integer', description: 'Task ID' }
+      }
+    },
+    body: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        description: { type: 'string' },
+        status: { type: 'string', enum: ['backlog', 'todo', 'in_progress', 'review', 'completed'] },
+        tags: { type: 'array', items: { type: 'string' } },
+        agent_id: { type: 'integer' }
+      }
+    },
+    response: {
+      200: { $ref: 'Task#' },
+      404: { $ref: 'Error#' }
+    }
+  }
+}, async (request, reply) => {
   const { id } = request.params;
   const { title, description, status, tags, agent_id } = request.body;
 
@@ -164,7 +357,30 @@ fastify.put('/api/tasks/:id', { ...withAuth }, async (request, reply) => {
  * @param {string} request.params.id - Task ID
  * @returns {object} Success response with deleted task
  */
-fastify.delete('/api/tasks/:id', { ...withAuth }, async (request, reply) => {
+fastify.delete('/api/tasks/:id', {
+  ...withAuth,
+  schema: {
+    description: 'Delete a task',
+    tags: ['Tasks'],
+    security: [{ apiKey: [] }],
+    params: {
+      type: 'object',
+      properties: {
+        id: { type: 'integer', description: 'Task ID' }
+      }
+    },
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean' },
+          deleted: { $ref: 'Task#' }
+        }
+      },
+      404: { $ref: 'Error#' }
+    }
+  }
+}, async (request, reply) => {
   const { id } = request.params;
 
   const { rows } = await dbAdapter.query(
@@ -195,7 +411,33 @@ const STATUS_PROGRESSION = {
  * @param {string} request.params.id - Task ID
  * @returns {object} Progress result with previous and new status
  */
-fastify.post('/api/tasks/:id/progress', { ...withAuth }, async (request, reply) => {
+fastify.post('/api/tasks/:id/progress', {
+  ...withAuth,
+  schema: {
+    description: 'Advance task to next status in workflow',
+    tags: ['Tasks'],
+    security: [{ apiKey: [] }],
+    params: {
+      type: 'object',
+      properties: {
+        id: { type: 'integer', description: 'Task ID' }
+      }
+    },
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean' },
+          previousStatus: { type: 'string' },
+          newStatus: { type: 'string' },
+          task: { $ref: 'Task#' }
+        }
+      },
+      400: { $ref: 'Error#' },
+      404: { $ref: 'Error#' }
+    }
+  }
+}, async (request, reply) => {
   const { id } = request.params;
   const nowFn = dbAdapter.isSQLite() ? "datetime('now')" : 'NOW()';
 
@@ -244,7 +486,30 @@ fastify.post('/api/tasks/:id/progress', { ...withAuth }, async (request, reply) 
  * @param {string} request.params.id - Task ID
  * @returns {object} Success response with completed task
  */
-fastify.post('/api/tasks/:id/complete', { ...withAuth }, async (request, reply) => {
+fastify.post('/api/tasks/:id/complete', {
+  ...withAuth,
+  schema: {
+    description: 'Mark task as completed directly',
+    tags: ['Tasks'],
+    security: [{ apiKey: [] }],
+    params: {
+      type: 'object',
+      properties: {
+        id: { type: 'integer', description: 'Task ID' }
+      }
+    },
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean' },
+          task: { $ref: 'Task#' }
+        }
+      },
+      404: { $ref: 'Error#' }
+    }
+  }
+}, async (request, reply) => {
   const { id } = request.params;
   const nowFn = dbAdapter.isSQLite() ? "datetime('now')" : 'NOW()';
 
@@ -304,60 +569,52 @@ function validateAgentInput(data, isUpdate = false) {
 }
 
 /**
- * @openapi
- * /api/agents:
- *   get:
- *     summary: List all agents
- *     tags: [Agents]
- *     responses:
- *       200:
- *         description: List of all agents
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Agent'
+ * GET /api/agents - List all agents
  */
-fastify.get('/api/agents', async (request, reply) => {
+fastify.get('/api/agents', {
+  schema: {
+    description: 'List all agents',
+    tags: ['Agents'],
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean' },
+          data: { type: 'array', items: { $ref: 'Agent#' } }
+        }
+      }
+    }
+  }
+}, async (request, reply) => {
   const { rows } = await dbAdapter.query('SELECT * FROM agents ORDER BY created_at');
   return { success: true, data: rows };
 });
 
 /**
- * @openapi
- * /api/agents/{id}:
- *   get:
- *     summary: Get a single agent by ID
- *     tags: [Agents]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Agent ID
- *     responses:
- *       200:
- *         description: Agent details
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   $ref: '#/components/schemas/Agent'
- *       404:
- *         description: Agent not found
+ * GET /api/agents/:id - Get a single agent by ID
  */
-fastify.get('/api/agents/:id', async (request, reply) => {
+fastify.get('/api/agents/:id', {
+  schema: {
+    description: 'Get a single agent by ID',
+    tags: ['Agents'],
+    params: {
+      type: 'object',
+      properties: {
+        id: { type: 'integer', description: 'Agent ID' }
+      }
+    },
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean' },
+          data: { $ref: 'Agent#' }
+        }
+      },
+      404: { $ref: 'Error#' }
+    }
+  }
+}, async (request, reply) => {
   const { id } = request.params;
 
   const { rows } = await dbAdapter.query(
@@ -373,42 +630,36 @@ fastify.get('/api/agents/:id', async (request, reply) => {
 });
 
 /**
- * @openapi
- * /api/agents:
- *   post:
- *     summary: Create a new agent
- *     tags: [Agents]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [name]
- *             properties:
- *               name:
- *                 type: string
- *                 maxLength: 100
- *                 description: Agent name (required, max 100 chars)
- *               description:
- *                 type: string
- *                 description: Agent description
- *               role:
- *                 type: string
- *                 default: Agent
- *                 description: Agent role
- *               status:
- *                 type: string
- *                 enum: [idle, working, error, offline]
- *                 default: idle
- *                 description: Agent status
- *     responses:
- *       201:
- *         description: Agent created successfully
- *       400:
- *         description: Invalid input
+ * POST /api/agents - Create a new agent
  */
-fastify.post('/api/agents', { ...withAuth }, async (request, reply) => {
+fastify.post('/api/agents', {
+  ...withAuth,
+  schema: {
+    description: 'Create a new agent',
+    tags: ['Agents'],
+    security: [{ apiKey: [] }],
+    body: {
+      type: 'object',
+      required: ['name'],
+      properties: {
+        name: { type: 'string', maxLength: 100, description: 'Agent name (required, max 100 chars)' },
+        description: { type: 'string', description: 'Agent description' },
+        role: { type: 'string', default: 'Agent', description: 'Agent role' },
+        status: { type: 'string', enum: ['idle', 'working', 'error', 'offline'], default: 'idle', description: 'Agent status' }
+      }
+    },
+    response: {
+      201: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean' },
+          data: { $ref: 'Agent#' }
+        }
+      },
+      400: { $ref: 'Error#' }
+    }
+  }
+}, async (request, reply) => {
   const { name, description, role = 'Agent', status = 'idle' } = request.body;
 
   const validation = validateAgentInput({ name, status });
@@ -429,43 +680,42 @@ fastify.post('/api/agents', { ...withAuth }, async (request, reply) => {
 });
 
 /**
- * @openapi
- * /api/agents/{id}:
- *   put:
- *     summary: Update an existing agent
- *     tags: [Agents]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *                 maxLength: 100
- *               description:
- *                 type: string
- *               role:
- *                 type: string
- *               status:
- *                 type: string
- *                 enum: [idle, working, error, offline]
- *     responses:
- *       200:
- *         description: Agent updated successfully
- *       400:
- *         description: Invalid input
- *       404:
- *         description: Agent not found
+ * PUT /api/agents/:id - Update an existing agent
  */
-fastify.put('/api/agents/:id', { ...withAuth }, async (request, reply) => {
+fastify.put('/api/agents/:id', {
+  ...withAuth,
+  schema: {
+    description: 'Update an existing agent',
+    tags: ['Agents'],
+    security: [{ apiKey: [] }],
+    params: {
+      type: 'object',
+      properties: {
+        id: { type: 'integer', description: 'Agent ID' }
+      }
+    },
+    body: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', maxLength: 100 },
+        description: { type: 'string' },
+        role: { type: 'string' },
+        status: { type: 'string', enum: ['idle', 'working', 'error', 'offline'] }
+      }
+    },
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean' },
+          data: { $ref: 'Agent#' }
+        }
+      },
+      400: { $ref: 'Error#' },
+      404: { $ref: 'Error#' }
+    }
+  }
+}, async (request, reply) => {
   const { id } = request.params;
   const { name, description, role, status } = request.body;
 
@@ -519,37 +769,40 @@ fastify.put('/api/agents/:id', { ...withAuth }, async (request, reply) => {
 });
 
 /**
- * @openapi
- * /api/agents/{id}/status:
- *   patch:
- *     summary: Quick status update for an agent
- *     tags: [Agents]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [status]
- *             properties:
- *               status:
- *                 type: string
- *                 enum: [idle, working, error, offline]
- *     responses:
- *       200:
- *         description: Status updated successfully
- *       400:
- *         description: Invalid status value
- *       404:
- *         description: Agent not found
+ * PATCH /api/agents/:id/status - Quick status update for an agent
  */
-fastify.patch('/api/agents/:id/status', { ...withAuth }, async (request, reply) => {
+fastify.patch('/api/agents/:id/status', {
+  ...withAuth,
+  schema: {
+    description: 'Quick status update for an agent',
+    tags: ['Agents'],
+    security: [{ apiKey: [] }],
+    params: {
+      type: 'object',
+      properties: {
+        id: { type: 'integer', description: 'Agent ID' }
+      }
+    },
+    body: {
+      type: 'object',
+      required: ['status'],
+      properties: {
+        status: { type: 'string', enum: ['idle', 'working', 'error', 'offline'] }
+      }
+    },
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean' },
+          data: { $ref: 'Agent#' }
+        }
+      },
+      400: { $ref: 'Error#' },
+      404: { $ref: 'Error#' }
+    }
+  }
+}, async (request, reply) => {
   const { id } = request.params;
   const { status } = request.body;
 
@@ -597,24 +850,37 @@ fastify.patch('/api/agents/:id/status', { ...withAuth }, async (request, reply) 
 });
 
 /**
- * @openapi
- * /api/agents/{id}:
- *   delete:
- *     summary: Delete an agent
- *     tags: [Agents]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Agent deleted successfully
- *       404:
- *         description: Agent not found
+ * DELETE /api/agents/:id - Delete an agent
  */
-fastify.delete('/api/agents/:id', { ...withAuth }, async (request, reply) => {
+fastify.delete('/api/agents/:id', {
+  ...withAuth,
+  schema: {
+    description: 'Delete an agent',
+    tags: ['Agents'],
+    security: [{ apiKey: [] }],
+    params: {
+      type: 'object',
+      properties: {
+        id: { type: 'integer', description: 'Agent ID' }
+      }
+    },
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean' },
+          data: {
+            type: 'object',
+            properties: {
+              deleted: { $ref: 'Agent#' }
+            }
+          }
+        }
+      },
+      404: { $ref: 'Error#' }
+    }
+  }
+}, async (request, reply) => {
   const { id } = request.params;
 
   const { rows } = await dbAdapter.query(
@@ -639,7 +905,25 @@ fastify.delete('/api/agents/:id', { ...withAuth }, async (request, reply) => {
  * @param {number} [request.query.limit=50] - Maximum messages to return
  * @returns {Array<object>} Array of message objects
  */
-fastify.get('/api/messages', async (request, reply) => {
+fastify.get('/api/messages', {
+  schema: {
+    description: 'Retrieve agent messages with optional filters',
+    tags: ['Messages'],
+    querystring: {
+      type: 'object',
+      properties: {
+        agent_id: { type: 'integer', description: 'Filter by agent ID' },
+        limit: { type: 'integer', default: 50, description: 'Maximum messages to return' }
+      }
+    },
+    response: {
+      200: {
+        type: 'array',
+        items: { $ref: 'Message#' }
+      }
+    }
+  }
+}, async (request, reply) => {
   const { agent_id, limit = 50 } = request.query;
   
   let query = 'SELECT m.*, a.name as agent_name FROM agent_messages m LEFT JOIN agents a ON m.agent_id = a.id';
@@ -664,7 +948,26 @@ fastify.get('/api/messages', async (request, reply) => {
  * @param {string} request.body.message - Message content (required)
  * @returns {object} Created message object
  */
-fastify.post('/api/messages', { ...withAuth }, async (request, reply) => {
+fastify.post('/api/messages', {
+  ...withAuth,
+  schema: {
+    description: 'Create a new message',
+    tags: ['Messages'],
+    security: [{ apiKey: [] }],
+    body: {
+      type: 'object',
+      required: ['message'],
+      properties: {
+        agent_id: { type: 'integer', description: 'Agent ID (optional)' },
+        message: { type: 'string', description: 'Message content (required)' }
+      }
+    },
+    response: {
+      201: { $ref: 'Message#' },
+      400: { $ref: 'Error#' }
+    }
+  }
+}, async (request, reply) => {
   const { agent_id, message } = request.body;
 
   if (!message) {
@@ -690,7 +993,42 @@ fastify.post('/api/messages', { ...withAuth }, async (request, reply) => {
  * GET /api/board - Get tasks in Kanban board format.
  * @returns {object} Board data with columns grouped by status
  */
-fastify.get('/api/board', async (request, reply) => {
+fastify.get('/api/board', {
+  schema: {
+    description: 'Get tasks in Kanban board format grouped by status columns',
+    tags: ['Board'],
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          columns: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                title: { type: 'string' },
+                status: { type: 'string' },
+                cards: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'integer' },
+                      text: { type: 'string' },
+                      description: { type: 'string' },
+                      status: { type: 'string' },
+                      agent_id: { type: 'integer' }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}, async (request, reply) => {
   const { rows } = await dbAdapter.query('SELECT * FROM tasks ORDER BY created_at');
   
   const columns = [
@@ -763,7 +1101,18 @@ async function simulateWorkProgress() {
  * @param {object} request.query - Query parameters
  * @param {string} [request.query.demo='false'] - Enable demo mode auto-progression
  */
-fastify.get('/api/stream', (req, res) => {
+fastify.get('/api/stream', {
+  schema: {
+    description: 'Server-Sent Events endpoint for real-time updates. Connect to receive live task and agent updates.',
+    tags: ['Stream'],
+    querystring: {
+      type: 'object',
+      properties: {
+        demo: { type: 'string', enum: ['true', 'false'], default: 'false', description: 'Enable demo mode auto-progression' }
+      }
+    }
+  }
+}, (req, res) => {
   const demoMode = req.query.demo === 'true';
   
   res.raw.writeHead(200, {
@@ -822,7 +1171,31 @@ fastify.get('/api/stream', (req, res) => {
  * GET /health - Health check endpoint.
  * @returns {object} Health status with database connection info
  */
-fastify.get('/health', async (request, reply) => {
+fastify.get('/health', {
+  schema: {
+    description: 'Health check endpoint returning server and database status',
+    tags: ['Health'],
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', enum: ['healthy', 'unhealthy'] },
+          database: { type: 'string', enum: ['connected', 'disconnected'] },
+          type: { type: 'string', description: 'Database type (postgres/sqlite)' },
+          authEnabled: { type: 'boolean' }
+        }
+      },
+      500: {
+        type: 'object',
+        properties: {
+          status: { type: 'string' },
+          database: { type: 'string' },
+          error: { type: 'string' }
+        }
+      }
+    }
+  }
+}, async (request, reply) => {
   try {
     await dbAdapter.query('SELECT 1');
     return { 
@@ -842,7 +1215,22 @@ fastify.get('/health', async (request, reply) => {
  * GET /api/auth/status - Check authentication configuration.
  * @returns {object} Auth status with mode information
  */
-fastify.get('/api/auth/status', async (request, reply) => {
+fastify.get('/api/auth/status', {
+  schema: {
+    description: 'Check authentication configuration status',
+    tags: ['Auth'],
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          enabled: { type: 'boolean' },
+          mode: { type: 'string', enum: ['protected', 'open'] },
+          message: { type: 'string' }
+        }
+      }
+    }
+  }
+}, async (request, reply) => {
   return {
     enabled: isAuthEnabled(),
     mode: isAuthEnabled() ? 'protected' : 'open',
@@ -860,7 +1248,35 @@ fastify.get('/api/auth/status', async (request, reply) => {
  * @param {boolean} [request.body.force=false] - Clear existing agents before reload
  * @returns {object} Reload result with created/skipped counts
  */
-fastify.post('/api/config/reload', { ...withAuth }, async (request, reply) => {
+fastify.post('/api/config/reload', {
+  ...withAuth,
+  schema: {
+    description: 'Reload agents from YAML configuration file',
+    tags: ['Config'],
+    security: [{ apiKey: [] }],
+    body: {
+      type: 'object',
+      properties: {
+        force: { type: 'boolean', default: false, description: 'Clear existing agents before reload' }
+      }
+    },
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean' },
+          message: { type: 'string' },
+          configPath: { type: 'string' },
+          created: { type: 'integer' },
+          skipped: { type: 'integer' },
+          total: { type: 'integer' },
+          agents: { type: 'array', items: { $ref: 'Agent#' } }
+        }
+      },
+      500: { $ref: 'Error#' }
+    }
+  }
+}, async (request, reply) => {
   const { force = false } = request.body || {};
   
   try {
@@ -929,7 +1345,22 @@ fastify.post('/api/config/reload', { ...withAuth }, async (request, reply) => {
  * GET /api/config/status - Get configuration file status.
  * @returns {object} Config status with path and search locations
  */
-fastify.get('/api/config/status', async (request, reply) => {
+fastify.get('/api/config/status', {
+  schema: {
+    description: 'Get configuration file status and search locations',
+    tags: ['Config'],
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          configPath: { type: 'string', nullable: true },
+          configFound: { type: 'boolean' },
+          searchedPaths: { type: 'array', items: { type: 'string' } }
+        }
+      }
+    }
+  }
+}, async (request, reply) => {
   const configPath = getConfigPath();
   
   return {
@@ -945,7 +1376,33 @@ fastify.get('/api/config/status', async (request, reply) => {
  * GET /api/webhooks - Get webhook configuration status.
  * @returns {object} Webhook config with enabled webhooks and supported events
  */
-fastify.get('/api/webhooks', async (request, reply) => {
+fastify.get('/api/webhooks', {
+  schema: {
+    description: 'Get webhook configuration status and supported events',
+    tags: ['Webhooks'],
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean' },
+          webhooksEnabled: { type: 'integer' },
+          supportedEvents: { type: 'array', items: { type: 'string' } },
+          webhooks: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                url: { type: 'string' },
+                events: { type: 'array', items: { type: 'string' } },
+                hasSecret: { type: 'boolean' }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}, async (request, reply) => {
   const webhooks = getWebhooks();
   
   return {
@@ -964,7 +1421,24 @@ fastify.get('/api/webhooks', async (request, reply) => {
  * POST /api/webhooks/reload - Reload webhook configuration from disk.
  * @returns {object} Reload result with updated webhook count
  */
-fastify.post('/api/webhooks/reload', { ...withAuth }, async (request, reply) => {
+fastify.post('/api/webhooks/reload', {
+  ...withAuth,
+  schema: {
+    description: 'Reload webhook configuration from disk',
+    tags: ['Webhooks'],
+    security: [{ apiKey: [] }],
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean' },
+          message: { type: 'string' },
+          webhooksEnabled: { type: 'integer' }
+        }
+      }
+    }
+  }
+}, async (request, reply) => {
   const webhooks = reloadWebhooks();
   
   return {
@@ -973,6 +1447,8 @@ fastify.post('/api/webhooks/reload', { ...withAuth }, async (request, reply) => 
     webhooksEnabled: webhooks.length
   };
 });
+
+}); // End of routes plugin
 
 // ============ AUTO-SEED ============
 
