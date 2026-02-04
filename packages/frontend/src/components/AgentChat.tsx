@@ -1,14 +1,3 @@
-/**
- * @fileoverview Agent Chat/Feed Component.
- * 
- * Displays a real-time feed of agent activity messages. Messages are shown
- * in chronological order with auto-scroll behavior when near the bottom.
- * Supports different message types (info, success, warning, error) with
- * color-coded styling.
- * 
- * @module components/AgentChat
- */
-
 import { useEffect, useRef } from 'react';
 import { MessageSquare, Bot } from 'lucide-react';
 import type { Message } from '../types';
@@ -18,11 +7,6 @@ interface AgentChatProps {
   loading?: boolean;
 }
 
-/**
- * Formats an ISO timestamp to HH:MM format.
- * @param timestamp - ISO timestamp string
- * @returns Formatted time string
- */
 function formatTimestamp(timestamp: string): string {
   try {
     const date = new Date(timestamp);
@@ -36,51 +20,83 @@ function formatTimestamp(timestamp: string): string {
   }
 }
 
-/** Color mapping for different message types */
-const typeColors: Record<string, string> = {
-  info: 'text-cyber-blue',
-  success: 'text-cyber-green',
-  warning: 'text-cyber-yellow',
-  error: 'text-cyber-red',
+const typeColors: Record<string, { text: string; bg: string; border: string }> = {
+  info: { 
+    text: 'text-accent-secondary', 
+    bg: 'bg-accent-secondary/5', 
+    border: 'border-accent-secondary/20' 
+  },
+  success: { 
+    text: 'text-accent-primary', 
+    bg: 'bg-accent-primary/5', 
+    border: 'border-accent-primary/20' 
+  },
+  warning: { 
+    text: 'text-accent-warning', 
+    bg: 'bg-accent-warning/5', 
+    border: 'border-accent-warning/20' 
+  },
+  error: { 
+    text: 'text-accent-danger', 
+    bg: 'bg-accent-danger/5', 
+    border: 'border-accent-danger/20' 
+  },
 };
 
-/**
- * Individual chat message showing agent name, timestamp, and content.
- * @param props.message - Message data to display
- */
 function ChatMessage({ message }: { message: Message }) {
-  const typeColor = typeColors[message.type || 'info'] || typeColors.info;
+  const typeStyle = typeColors[message.type || 'info'] || typeColors.info;
   
   return (
-    <div className="px-2.5 sm:px-3 py-2.5 sm:py-2 hover:bg-white/5 active:bg-white/10 transition-colors border-b border-white/5 last:border-0 touch-manipulation">
-      <div className="flex items-center gap-2 mb-1.5 sm:mb-1">
-        <div className="w-6 h-6 sm:w-5 sm:h-5 rounded bg-cyber-green/20 flex items-center justify-center flex-shrink-0">
-          <Bot className="w-3.5 h-3.5 sm:w-3 sm:h-3 text-cyber-green" />
+    <div className={`
+      px-4 py-3 
+      hover:bg-white/[0.02] 
+      transition-colors 
+      border-b border-white/5 last:border-0 
+      touch-manipulation 
+      animate-in
+    `}>
+      {/* Header: Agent + Time */}
+      <div className="flex items-center gap-2.5 mb-2">
+        <div className={`w-7 h-7 rounded-lg ${typeStyle.bg} border ${typeStyle.border} flex items-center justify-center flex-shrink-0`}>
+          <Bot className={`w-3.5 h-3.5 ${typeStyle.text}`} />
         </div>
-        <span className="text-xs font-semibold text-cyber-green truncate">{message.agentName}</span>
-        <span className="text-[10px] text-gray-500 font-mono ml-auto flex-shrink-0">
+        <span className={`text-xs font-semibold ${typeStyle.text} truncate`}>
+          {message.agentName}
+        </span>
+        <span className="text-[10px] text-accent-muted font-mono ml-auto flex-shrink-0">
           {formatTimestamp(message.timestamp)}
         </span>
       </div>
-      <p className={`text-sm sm:text-sm pl-8 sm:pl-7 ${typeColor} break-words leading-relaxed`}>
+      
+      {/* Message Content */}
+      <p className="text-sm text-gray-300 pl-[38px] break-words leading-relaxed">
         {message.content}
       </p>
     </div>
   );
 }
 
-/**
- * Main agent chat feed component with auto-scroll behavior.
- * Automatically scrolls to new messages when user is near the bottom.
- * 
- * @param props.messages - Array of messages to display
- * @param props.loading - Whether data is still loading
- */
+function MessageSkeleton() {
+  return (
+    <div className="px-4 py-3 border-b border-white/5 animate-pulse">
+      <div className="flex items-center gap-2.5 mb-2">
+        <div className="w-7 h-7 rounded-lg bg-white/5" />
+        <div className="h-3 w-20 bg-white/5 rounded" />
+        <div className="h-3 w-12 bg-white/5 rounded ml-auto" />
+      </div>
+      <div className="pl-[38px] space-y-1.5">
+        <div className="h-3 w-full bg-white/5 rounded" />
+        <div className="h-3 w-2/3 bg-white/5 rounded" />
+      </div>
+    </div>
+  );
+}
+
 export function AgentChat({ messages, loading }: AgentChatProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom on new messages if already near bottom
+  // Auto-scroll to bottom on new messages
   useEffect(() => {
     if (scrollRef.current && containerRef.current) {
       const container = containerRef.current;
@@ -95,15 +111,20 @@ export function AgentChat({ messages, loading }: AgentChatProps) {
   if (loading) {
     return (
       <div className="h-full flex flex-col">
-        <div className="p-3 border-b border-cyber-blue/20">
-          <h2 className="text-sm font-bold text-cyber-blue uppercase tracking-widest flex items-center gap-2">
-            <MessageSquare className="w-4 h-4" />
-            Agent Feed
-          </h2>
+        <div className="p-4 border-b border-white/5">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-accent-secondary/10 flex items-center justify-center">
+              <MessageSquare className="w-4 h-4 text-accent-secondary" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-white">Agent Feed</h2>
+              <p className="text-[10px] text-accent-muted">Live updates</p>
+            </div>
+          </div>
         </div>
-        <div className="flex-1 p-3 space-y-2">
+        <div className="flex-1 overflow-hidden">
           {[1, 2, 3, 4, 5].map(i => (
-            <div key={i} className="h-12 bg-cyber-dark/30 rounded animate-pulse" />
+            <MessageSkeleton key={i} />
           ))}
         </div>
       </div>
@@ -112,19 +133,32 @@ export function AgentChat({ messages, loading }: AgentChatProps) {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-3 border-b border-cyber-blue/20 bg-black/30">
-        <h2 className="text-sm font-bold text-cyber-blue uppercase tracking-widest flex items-center gap-2">
-          <MessageSquare className="w-4 h-4" />
-          Agent Feed
-          <span className="ml-auto text-[10px] font-mono text-cyber-blue/50">{messages.length}</span>
-        </h2>
+      <div className="p-4 border-b border-white/5 bg-claw-surface/30">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-accent-secondary/10 border border-accent-secondary/20 flex items-center justify-center">
+              <MessageSquare className="w-4 h-4 text-accent-secondary" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-white">Agent Feed</h2>
+              <p className="text-[10px] text-accent-muted">Live updates</p>
+            </div>
+          </div>
+          <span className="text-xs font-mono text-accent-secondary bg-accent-secondary/10 px-2 py-1 rounded-md">
+            {messages.length}
+          </span>
+        </div>
       </div>
+      
       <div ref={containerRef} className="flex-1 overflow-y-auto">
         {messages.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-gray-500 text-sm">
-            <div className="text-center">
-              <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30" />
-              <p>No messages yet</p>
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center py-12">
+              <div className="w-12 h-12 rounded-xl bg-accent-muted/10 flex items-center justify-center mx-auto mb-3">
+                <MessageSquare className="w-6 h-6 text-accent-muted" />
+              </div>
+              <p className="text-sm text-accent-muted">No messages yet</p>
+              <p className="text-xs text-accent-muted/60 mt-1">Agent updates will appear here</p>
             </div>
           </div>
         ) : (

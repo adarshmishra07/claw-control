@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -9,83 +9,65 @@
 }
 
 body {
-  @apply bg-cyber-black text-cyber-green font-mono;
-  background-image: 
-    linear-gradient(rgba(0, 10, 20, 0.9), rgba(0, 5, 10, 0.95)),
-    linear-gradient(0deg, transparent 24%, rgba(0, 243, 255, .03) 25%, rgba(0, 243, 255, .03) 26%, transparent 27%, transparent 74%, rgba(0, 243, 255, .03) 75%, rgba(0, 243, 255, .03) 76%, transparent 77%, transparent),
-    linear-gradient(90deg, transparent 24%, rgba(0, 243, 255, .03) 25%, rgba(0, 243, 255, .03) 26%, transparent 27%, transparent 74%, rgba(0, 243, 255, .03) 75%, rgba(0, 243, 255, .03) 76%, transparent 77%, transparent);
-  background-size: 100% 100%, 30px 30px, 30px 30px;
-  background-attachment: fixed;
+  @apply bg-claw-bg text-gray-100 font-sans overflow-hidden antialiased;
+  background: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 80% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
+    #0a0b0d;
 }
 
-/* Landing page allows scrolling */
-body:has(.min-h-screen) {
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-/* Dashboard locks scrolling */
-body:has(.crt-overlay) {
-  overflow: hidden;
-}
-
-/* CRT Screen Effect Overlay */
-.crt-overlay::before {
-  content: " ";
-  display: block;
+/* Subtle noise texture overlay */
+.noise-overlay::before {
+  content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-  z-index: 50;
-  background-size: 100% 2px, 3px 100%;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
   pointer-events: none;
-}
-
-/* Subtle screen flicker */
-.crt-overlay::after {
-  content: " ";
-  display: block;
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  background: rgba(18, 16, 16, 0.1);
-  opacity: 0;
   z-index: 50;
-  pointer-events: none;
-  animation: flicker 0.15s infinite;
+  opacity: 0.3;
 }
 
-@keyframes flicker {
-  0% { opacity: 0.01; }
-  50% { opacity: 0.03; }
-  100% { opacity: 0.01; }
-}
-
-/* Scrollbar */
+/* Modern scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
-  @apply bg-black border-l border-cyber-green/20;
-}
-::-webkit-scrollbar-thumb {
-  @apply bg-cyber-green/50 hover:bg-cyber-green;
+  @apply bg-claw-bg;
 }
 
+::-webkit-scrollbar-thumb {
+  @apply bg-accent-primary/30 rounded-full hover:bg-accent-primary/50 transition-colors;
+}
+
+/* Subtle glow effects */
 .text-glow {
-  text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+  text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
 }
-.text-glow-blue {
-  text-shadow: 0 0 5px rgba(0, 243, 255, 0.5);
+
+.text-glow-cyan {
+  text-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
 }
-.text-glow-pink {
-  text-shadow: 0 0 5px rgba(255, 0, 255, 0.5);
+
+/* Card glass effect */
+.glass {
+  @apply bg-claw-card/80 backdrop-blur-md border border-white/5;
+}
+
+.glass-hover {
+  @apply hover:bg-claw-card/90 hover:border-white/10 transition-all duration-200;
+}
+
+/* Status indicator pulse */
+.status-pulse {
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 /* Safe area padding for notched phones */
@@ -123,4 +105,45 @@ body:has(.crt-overlay) {
   .snap-center {
     scroll-snap-align: center;
   }
+}
+
+/* Animation utilities */
+.animate-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Gradient border effect */
+.gradient-border {
+  position: relative;
+}
+
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(6, 182, 212, 0.1), transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Legacy CRT overlay - disabled but kept for reference */
+.crt-overlay::before,
+.crt-overlay::after {
+  display: none;
 }
