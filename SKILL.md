@@ -701,9 +701,61 @@ When given work:
 
 ---
 
+## ⚠️ CRITICAL: Setup Verification (DO THIS BEFORE COMPLETING!)
+
+**Before saying setup is complete, you MUST verify everything works:**
+
+### 1. Verify API Connection
+```bash
+curl -s <BACKEND_URL>/api/agents \
+  -H "x-api-key: <API_KEY>"
+```
+✅ Should return list of agents with your theme names (not "Coordinator", "Backend" defaults)
+
+### 2. Create a Test Task
+```bash
+curl -X POST <BACKEND_URL>/api/tasks \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: <API_KEY>" \
+  -d '{"title": "🧪 Setup Verification Test", "description": "This task verifies Claw Control is working correctly. You can delete this!", "status": "completed"}'
+```
+✅ Should return the created task with an ID
+
+### 3. Post a Test Message to Feed
+```bash
+curl -X POST <BACKEND_URL>/api/messages \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: <API_KEY>" \
+  -d '{"agent_id": 1, "content": "🦞 **Claw Control Connected!** Setup verification successful."}'
+```
+✅ Should return the created message
+
+### 4. Ask User to Check Dashboard
+```
+I just created a test task and posted a message. 
+
+Please check your dashboard: <FRONTEND_URL>
+
+You should see:
+- ✅ Your themed agent names (not the defaults)
+- ✅ A "🧪 Setup Verification Test" task in Completed
+- ✅ A "🦞 Claw Control Connected!" message in the feed
+
+Can you confirm everything looks right?
+```
+
+**If ANY of these fail:**
+- Check API_KEY is correct
+- Check BACKEND_URL is correct
+- Help user debug before proceeding
+
+**Only proceed to completion message after user confirms dashboard shows the test task!**
+
+---
+
 ## Completion Message
 
-After all setup:
+After all setup AND verification:
 
 ```
 🦞 Claw Control Setup Complete!
