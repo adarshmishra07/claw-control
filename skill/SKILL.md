@@ -394,29 +394,54 @@ As [Main Character], you're the COORDINATOR:
 Think of yourself as the team lead, not the coder.
 ```
 
-### Step 4: Browser Setup Check
+### Step 4: Browser Setup (⚠️ CRITICAL!)
 
-Ask: **"Is your browser configured for OpenClaw? Let me check..."**
+**Without browser access, agents cannot:**
+- Research anything online
+- Verify their work
+- Interact with web apps
+- Do most useful tasks
+
+Ask: **"Let me check if browser is configured..."**
 
 Check with: `browser action=status`
 
-**If not configured:**
+**If not configured, STRONGLY encourage setup:**
 ```
-Browser access is a game-changer! It lets me:
-- 🔍 Research and gather information autonomously
-- 📝 Fill forms and interact with web apps
-- 📸 Take screenshots to verify my work
-- 🌐 Browse the web on your behalf
+⚠️ Browser access is CRITICAL for your agents to be useful!
 
-To set it up:
-1. Install the OpenClaw Browser Relay extension
-2. Click the toolbar button on any tab you want to share
-3. That's it! I can now browse for you.
+Without it, they literally cannot:
+- 🔍 Research or look anything up
+- 📸 Take screenshots to verify work
+- 🌐 Interact with any web app
+- ✅ Complete most real-world tasks
 
-Want me to walk you through this?
+Setting it up takes 2 minutes:
+
+**Option A: Chrome Extension (Recommended)**
+1. Install the OpenClaw Browser Relay extension from Chrome Web Store
+2. Click the 🦞 claw icon on any tab
+3. Badge shows "ON" = connected!
+
+**Option B: OpenClaw Managed Browser**
+I can use a built-in browser (headless). Just say "use managed browser".
+
+Which option do you prefer?
 ```
 
-If they agree, guide them through browser setup per OpenClaw docs.
+**If an agent gets stuck because browser is unavailable:**
+```
+🚫 I can't complete this task - browser access is required.
+
+Quick fix:
+1. Click the OpenClaw extension icon in your browser toolbar
+2. Make sure a tab is attached (badge shows "ON")
+3. Tell me to retry
+
+Or say "use managed browser" and I'll use the built-in one.
+```
+
+**ALWAYS check browser status before tasks that need web access.**
 
 ### Step 5: GitHub Setup
 
@@ -569,6 +594,62 @@ curl -fsSL https://bun.sh/install | bash
 | QMD | I can only search the web | I can search YOUR personal knowledge base |
 
 Both are optional, but they make me significantly more useful. Set them up when you're ready - we can always add them later!
+
+---
+
+### Step 7: More Recommended Integrations
+
+Ask: **"Here are some other tools that make your agent team even more powerful. Want to set any up?"**
+
+#### 📅 Cron Jobs / Reminders
+**What it does:** Schedule tasks, set reminders, run periodic checks
+```
+I can:
+- Remind you of things at specific times
+- Run daily/weekly checks automatically
+- Monitor things in the background
+- Wake up and do tasks on schedule
+
+Example: "Remind me every Monday at 9am to check project status"
+```
+Already built into OpenClaw - just ask me to set reminders!
+
+#### 🦞 Moltbook - AI Agent Social Network
+**What it does:** Connect with other AI agents, share learnings
+```
+Moltbook is a social network for AI agents! I can:
+- Post updates and learnings
+- See what other agents are building
+- Join communities and discussions
+- Get claimed by you (prove I'm your agent)
+
+Want to register me on Moltbook?
+```
+Setup: Visit moltbook.com and claim your agent
+
+#### 🔊 Text-to-Speech (TTS)
+**What it does:** I can speak responses aloud
+```
+Great for:
+- Storytelling and summaries
+- Hands-free updates
+- Making content more engaging
+
+Say "read this aloud" or "tell me as audio" for voice output.
+```
+Usually pre-configured - just ask for audio!
+
+#### 🔔 Notifications (Mobile/Desktop)
+**What it does:** Get pinged when important things happen
+```
+I can send notifications to your:
+- Phone (via Telegram, Signal, etc.)
+- Desktop
+- Other devices
+
+Never miss important updates from your agents!
+```
+Uses your existing chat channel (Telegram, etc.)
 
 ---
 
