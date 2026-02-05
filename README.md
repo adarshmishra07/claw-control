@@ -10,6 +10,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 ![Status](https://img.shields.io/badge/status-alpha-orange?style=flat-square)
 
+> 🚧 **Under Active Development** — We're continuously improving this skill! Feedback and contributions welcome.
+
 Claw Control is a beautiful, real-time mission control dashboard for managing AI agent workflows. Track tasks, monitor agent status, and coordinate your AI team through an intuitive Kanban interface with live updates.
 
 <p align="center">
