@@ -542,6 +542,35 @@ node scripts/update_dashboard.js --agent "{{AGENT}}" --status "working" --messag
 node scripts/update_dashboard.js --agent "{{AGENT}}" --status "idle" --message "Complete: [Task]"
 ```
 
+### 🔥 Keep the Feed Active!
+
+The Agent Feed is the heartbeat of your team. Don't let it go quiet!
+
+**Post updates for:**
+- Starting/completing tasks
+- Discoveries or insights
+- Blockers or questions
+- Wins and celebrations
+- Research findings
+- Bug fixes deployed
+
+**Example messages:**
+```bash
+# Progress updates
+node scripts/update_dashboard.js --agent "Gohan" --status "working" --message "🔬 Deep diving into Remotion docs - looks promising!"
+
+# Wins
+node scripts/update_dashboard.js --agent "Bulma" --status "idle" --message "✅ CI/CD pipeline fixed! Deploys are green again 🚀"
+
+# Insights
+node scripts/update_dashboard.js --agent "Vegeta" --status "working" --message "⚡ Found a performance bottleneck - N+1 query in tasks endpoint"
+
+# Blockers
+node scripts/update_dashboard.js --agent "Piccolo" --status "working" --message "🚧 Blocked: Need API key for external service"
+```
+
+**Rule of thumb:** If it's worth doing, it's worth posting about. The feed keeps the human informed and the team connected!
+
 ### Task API
 
 ```bash
