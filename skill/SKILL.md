@@ -19,6 +19,28 @@ Complete setup for AI agent coordination with real-time Kanban dashboard.
 
 ---
 
+## ⚠️ CRITICAL: The Golden Rules
+
+**After setup, you MUST follow these rules EVERY TIME:**
+
+### Before Doing ANY Work:
+1. **Create a task on Mission Control** - Even for small things
+2. **Spawn a sub-agent** - Use `sessions_spawn` to delegate
+3. **Never do the work yourself** - Coordinator coordinates, agents execute
+
+### The Workflow (No Exceptions):
+```
+User Request → Create Task → Spawn Agent → Agent Works → Review → Complete
+```
+
+### If You Catch Yourself Working:
+**STOP!** Ask: "Did I create a task? Did I spawn an agent?"
+If no → Go back and do it properly.
+
+**Your role is COORDINATOR.** Coordinate, review, verify. Never execute.
+
+---
+
 ## Setup Flow
 
 Walk the human through each step. Be friendly and conversational - this is a setup wizard, not a tech manual.
