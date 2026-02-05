@@ -370,26 +370,13 @@ If the response shows the new names, the theme is applied! If not, debug before 
 
 ---
 
-### Step 3: Main Character & Human Setup
+### Step 3: Main Character Selection
 
 Ask: **"Who's your main character? This will be ME - the coordinator who runs the team."**
 
 Default to the coordinator from their chosen theme.
 
-**Also ask for the human's name:**
-```
-And what should I call you? This is so I can tag you 
-in tasks when I need your help.
-
-(e.g., "Adarsh", "Boss", your nickname - whatever you prefer!)
-```
-
-**Store in TOOLS.md:**
-```markdown
-## Team
-- Human: <their_name>
-- Coordinator: <agent_name>
-```
+**Note:** You already know the human's name from USER.md - use it when creating human tasks (e.g., "🙋 @Adarsh: ...").
 
 **CRITICAL - Explain the role clearly:**
 ```
@@ -458,46 +445,50 @@ Or say "use managed browser" and I'll use the built-in one.
 
 **ALWAYS check browser status before tasks that need web access.**
 
-### Step 5: GitHub Setup
+### Step 5: GitHub Setup (🚀 Enables Full Automation!)
 
-Ask: **"Let's set up GitHub so I can deploy and manage code autonomously. Do you have it configured?"**
+Ask: **"Want me to handle ALL the development? With GitHub access, I can do everything - including deploying Claw Control for you!"**
 
-**Why it matters:**
+**Why this is powerful:**
 ```
-With GitHub access, I become a true developer:
-- 🚀 Deploy to Railway/Vercel automatically
-- 📦 Create and manage repositories
-- 💻 Commit and push code changes
+With GitHub access, I become your full development team:
+- 🚀 Deploy Claw Control to Railway AUTOMATICALLY
+- 📦 Fork repos, create projects, manage code
+- 💻 Commit and push changes
 - 🔀 Handle issues and pull requests
+- 🔑 Generate and configure API keys
 
-This is how I ship code without bothering you!
+You literally just give me GitHub access and I handle the rest.
+No clicking buttons. No copying URLs. I do it all.
 ```
 
-**Setup options:**
-
-1. **Personal Access Token (recommended):**
-   ```
-   Let's create a GitHub token:
-   1. Go to github.com/settings/tokens
-   2. Click "Generate new token (classic)"
-   3. Give it a name like "OpenClaw Agent"
-   4. Select scopes: repo, workflow
-   5. Click "Generate token"
-   6. Copy it and store it safely:
-   
-   export GITHUB_TOKEN="ghp_yourtoken"
-   ```
-
-2. **GitHub CLI (alternative):**
-   ```bash
-   gh auth login
-   ```
-
-**Security reminder:** 
+**Setup (2 minutes):**
 ```
-🔐 Never paste tokens directly in chat where others might see them.
-Store them in your .env file or export them in your shell config.
+Let's create a GitHub token:
+
+1. Go to: github.com/settings/tokens
+2. Click "Generate new token (classic)"
+3. Name it: "OpenClaw Agent"
+4. Select scopes: repo, workflow
+5. Click "Generate token"
+6. Share the token with me (starts with ghp_...)
+
+🔐 I'll store it securely and NEVER share it.
 ```
+
+**Once I have GitHub access, I can:**
+1. Fork the Claw Control repo to your account
+2. Create a Railway project linked to your fork
+3. Generate a secure API_KEY for your deployment
+4. Deploy everything automatically
+5. Give you the URLs when done
+
+**This is Option C from deployment - the VIP treatment!**
+
+If they already did one-click deploy, GitHub is still useful for:
+- Future code changes and deployments
+- Managing other projects
+- Autonomous development work
 
 ### Step 6: Memory Enhancement (Optional but Awesome!)
 
@@ -550,54 +541,42 @@ Supermemory gives me persistent memory that survives across sessions. Without it
 
 ---
 
-#### 📚 QMD - Local Note Search
+#### 📚 QMD - Local Note Search (Optional - Skip if unsure)
+
+**Note:** QMD is useful if you have lots of local markdown notes/docs you want to search. If you don't, skip this!
 
 **What it does:**
-QMD indexes your local markdown files so I can search through your notes, documentation, and knowledge base instantly.
+QMD indexes your local markdown files so I can search through your notes and documentation.
 
-**Why you'll love it:**
-- 🔍 I can find information in YOUR docs, not just the internet
-- 📖 Search your personal knowledge base with natural language
-- ⚡ Instant retrieval - no more "where did I write that?"
-- 🏠 Everything stays local and private
+**Only set this up if you:**
+- Have a folder of markdown notes you want searchable
+- Want me to reference your personal docs
+- Skip this if you're just getting started
+
+<details>
+<summary>Click to expand QMD setup (optional)</summary>
 
 **Prerequisites:**
 ```bash
-# Make sure you have Bun installed
 curl -fsSL https://bun.sh/install | bash
 ```
 
-**Setup (3 minutes):**
+**Setup:**
+```bash
+# Install QMD
+bun install -g https://github.com/tobi/qmd
 
-1. **Install QMD:**
-   ```bash
-   bun install -g https://github.com/tobi/qmd
-   ```
+# Add your notes folder
+qmd collection add ~/notes --name notes --mask "**/*.md"
 
-2. **Add your notes folder:**
-   ```bash
-   # Point it at your notes/docs folder
-   qmd collection add ~/notes --name notes --mask "**/*.md"
-   
-   # Add more folders if you want
-   qmd collection add ~/projects/docs --name project-docs --mask "**/*.md"
-   ```
+# Index everything
+qmd embed
 
-3. **Create embeddings:**
-   ```bash
-   qmd embed
-   # This indexes everything - might take a minute for large collections
-   ```
+# Test it
+qmd search "your search query"
+```
 
-4. **Test it works:**
-   ```bash
-   qmd search "your search query"
-   ```
-
-**What this enables:**
-- "What's in my notes about Kubernetes?"
-- "Find my meeting notes from the product review"
-- "Search my docs for the API authentication flow"
+</details>
 
 ---
 
