@@ -22,24 +22,34 @@ Claw Control is a beautiful, real-time mission control dashboard for managing AI
 
 ## 🚀 Quick Start
 
-### Install the Skill (Recommended)
+### Step 1: Install the Skill
 
 ```bash
 npx skills add adarshmishra07/claw-control
 ```
 
-Your AI agent will guide you through everything:
+This teaches your AI agent how to use Claw Control.
+
+### Step 2: Let Your Agent Guide You
+
+Your agent will walk you through:
 - 🚀 **Deployment** - Railway one-click, Docker, or manual setup
 - 🎨 **Theme Selection** - DBZ, One Piece, Marvel, and more
 - ⚙️ **Configuration** - AGENTS.md setup, API connections
 - 🧠 **Memory Integration** - Optional Supermemory + QMD setup
 
-**That's it!** The skill handles the rest.
+**That's it!** Install the skill, and your agent handles the rest.
 
 ---
 
 <details>
-<summary>📦 <strong>Manual Deployment Options</strong> (if not using the skill)</summary>
+<summary>📦 <strong>Deployment Options</strong> (the skill will guide you through these)</summary>
+
+> **Note:** After deploying, you still need to install the skill to your AI agent:
+> ```bash
+> npx skills add adarshmishra07/claw-control
+> ```
+> The skill teaches your agent how to use Claw Control.
 
 ### Railway (One-Click)
 
