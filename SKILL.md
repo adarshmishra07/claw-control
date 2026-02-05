@@ -565,6 +565,44 @@ If they already did one-click deploy, GitHub is still useful for:
 - Managing other projects
 - Autonomous development work
 
+---
+
+#### 🤖 Auto-Setup Capabilities Reference
+
+**What GitHub PAT alone can auto-setup:**
+
+| Integration | Auto-Setup? | What Bot Can Do |
+|-------------|-------------|-----------------|
+| Claw Control (fork) | ✅ Yes | Fork repo to user's GitHub automatically |
+| GitHub Webhooks | ✅ Yes | Configure webhooks for repos |
+| GitHub Actions | ✅ Yes | Enable/configure CI/CD workflows |
+| Repository Secrets | ✅ Yes | Manage encrypted secrets via API |
+| Issues/PRs | ✅ Yes | Create, manage, and track automatically |
+
+**What requires user signup first:**
+
+| Service | Auto-Setup? | User Action Required |
+|---------|-------------|---------------------|
+| Railway | ❌ No | User must create account, generate API token |
+| Supermemory | ❌ No | User must sign up at console.supermemory.ai |
+| Vercel | ❌ No | User must create account, generate token |
+| Netlify | ❌ No | User must create account, generate token |
+
+**Why can't we auto-create these accounts?**
+- No public APIs exist for programmatic account creation
+- These services require email verification / OAuth consent
+- Security: Account creation should be user-initiated
+
+**The goal: Minimize friction, not eliminate signup**
+
+When user provides GitHub token, the bot should:
+1. ✅ Auto-handle everything GitHub-native (forks, repos, webhooks)
+2. ✅ Pre-fill setup instructions with user's GitHub info where possible
+3. ✅ Store any additional tokens user provides and handle all subsequent automation
+4. ✅ Connect integrations together (e.g., GitHub ↔ Supermemory sync)
+
+---
+
 ### Step 6: Memory Enhancement (Optional but Awesome!)
 
 Ask: **"Want to supercharge my memory? I have two optional upgrades that make me way more helpful:"**
@@ -582,11 +620,20 @@ Supermemory gives me persistent memory that survives across sessions. Without it
 - 🔄 I recall past decisions so we don't rehash old discussions
 - 💡 I connect dots across conversations ("Remember when we decided X last month?")
 
+**⚠️ CANNOT be auto-setup:** Supermemory requires manual account creation. No API exists to create accounts programmatically - users MUST sign up at console.supermemory.ai first.
+
+**What the bot CAN do to minimize friction:**
+- ✅ Store and configure API key once provided
+- ✅ Handle all subsequent API calls automatically
+- ✅ Connect GitHub repos to Supermemory (if both tokens provided)
+- ✅ Auto-configure memory storage and retrieval
+- ❌ Cannot create Supermemory account on user's behalf
+
 **Setup (5 minutes):**
 
-1. **Create an account:**
+1. **Create an account (user must do this):**
    ```
-   Go to console.supermemory.ai and sign up (free tier available!)
+   Go to console.supermemory.ai and sign up (free tier: 1M tokens, 10K searches)
    ```
 
 2. **Get your API key:**
@@ -594,20 +641,20 @@ Supermemory gives me persistent memory that survives across sessions. Without it
    Dashboard → API Keys → Create New Key → Copy it
    ```
 
-3. **Store it securely:**
-   ```bash
-   # Add to your .env file:
-   SUPERMEMORY_API_KEY="sm_your_api_key_here"
-   
-   # Or export in your shell:
-   export SUPERMEMORY_API_KEY="sm_your_api_key_here"
-   ```
+3. **Share it with me:**
+   Once you share the API key, I'll handle everything else:
+   - Store it securely in TOOLS.md
+   - Configure memory operations
+   - Optionally connect your GitHub repos for doc syncing
 
-4. **Test it works:**
-   ```bash
-   curl -H "Authorization: Bearer $SUPERMEMORY_API_KEY" \
-     https://api.supermemory.ai/v1/memories
-   ```
+**Bonus: GitHub + Supermemory Integration**
+
+If you've already set up GitHub (Step 5) AND have a Supermemory API key, I can automatically:
+- Connect your GitHub repos to Supermemory
+- Sync your documentation (.md, .txt, .rst files) to your memory
+- Enable real-time incremental sync via webhooks
+
+Just say: "Connect my GitHub to Supermemory" and I'll handle the OAuth flow!
 
 **What this enables:**
 - "Remember that I prefer TypeScript over JavaScript"
