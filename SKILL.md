@@ -164,14 +164,14 @@ Ask: **"Now for the fun part! Let's theme your agent team. Name ANY series, movi
 
 **Popular examples (but NOT limited to these):**
 
-**Popular Themes:**
-
-🐉 **Dragon Ball Z** - Goku, Vegeta, Bulma, Gohan, Piccolo, Trunks
-☠️ **One Piece** - Luffy, Zoro, Nami, Robin, Franky, Sanji
-🦸 **Marvel** - Tony, Steve, Natasha, Bruce, Thor, Peter
-🧪 **Breaking Bad** - Walter, Jesse, Mike, Gale, Gus, Saul
-⚔️ **Game of Thrones** - Jon, Tyrion, Arya, Sam, Bran, Daenerys
-🍥 **Naruto** - Naruto, Sasuke, Sakura, Shikamaru, Kakashi, Itachi
+| Theme | Coordinator | Backend | DevOps | Research | Architecture | Deployment |
+|-------|-------------|---------|--------|----------|--------------|------------|
+| 🐉 Dragon Ball Z | Goku | Vegeta | Bulma | Gohan | Piccolo | Trunks |
+| ☠️ One Piece | Luffy | Zoro | Nami | Robin | Franky | Sanji |
+| 🦸 Marvel | Tony | Steve | Natasha | Bruce | Thor | Peter |
+| 🧪 Breaking Bad | Walter | Jesse | Mike | Gale | Gus | Saul |
+| ⚔️ Game of Thrones | Jon | Tyrion | Arya | Sam | Bran | Daenerys |
+| 🍥 Naruto | Naruto | Sasuke | Sakura | Shikamaru | Kakashi | Itachi |
 
 **When user names ANY series:**
 1. Pick 6 iconic characters that fit the roles
@@ -183,12 +183,14 @@ Ask: **"Now for the fun part! Let's theme your agent team. Name ANY series, movi
 ```
 Great choice! Here's your Team Avatar:
 
-**Coordinator:** Aang - The Avatar, brings balance
-**Backend:** Toph - Earthbender, solid foundation
-**DevOps:** Katara - Waterbender, keeps things flowing
-**Research:** Sokka - Strategist, plans everything
-**Architecture:** Iroh - Wise, sees the big picture
-**Deployment:** Zuko - Redeemed, handles the heat
+| Role | Character | Why |
+|------|-----------|-----|
+| Coordinator | Aang | The Avatar, brings balance |
+| Backend | Toph | Earthbender, solid foundation |
+| DevOps | Katara | Waterbender, keeps things flowing |
+| Research | Sokka | Strategist, plans everything |
+| Architecture | Iroh | Wise, sees the big picture |
+| Deployment | Zuko | Redeemed, handles the heat |
 
 Sound good?
 ```
@@ -466,29 +468,32 @@ With browser access + the user logged into GitHub, the bot can **automatically s
 
 **What Browser + GitHub OAuth can auto-setup:**
 
-**Services with Browser Auto-Setup:**
-- ✅ **Railway** - OAuth → Create project → Get API token
-- ✅ **Supermemory** - OAuth → Dashboard → Copy API key
-- ✅ **Vercel** - OAuth → Settings → Create token
-- ✅ **Netlify** - OAuth → User settings → New token
-- ✅ **Supabase** - OAuth → Project settings → Copy keys
-- ✅ **PlanetScale** - OAuth → Connection strings
+| Service | Auto-Setup? | How Bot Does It |
+|---------|-------------|-----------------|
+| Railway | ✅ **YES** | Navigate → GitHub OAuth → Create project → Get API token from settings |
+| Supermemory | ✅ **YES** | Navigate → GitHub OAuth → Dashboard → Copy API key |
+| Vercel | ✅ **YES** | Navigate → GitHub OAuth → Settings → Create token |
+| Netlify | ✅ **YES** | Navigate → GitHub OAuth → User settings → New token |
+| Supabase | ✅ **YES** | Navigate → GitHub OAuth → Project settings → Copy keys |
+| PlanetScale | ✅ **YES** | Navigate → GitHub OAuth → Connection strings |
 
 **What GitHub PAT alone can auto-setup (no browser needed):**
 
-**GitHub PAT Enables (no browser needed):**
-- ✅ **Claw Control fork** - Fork repo to your GitHub
-- ✅ **Webhooks** - Configure webhooks for repos
-- ✅ **GitHub Actions** - Enable/configure CI/CD
-- ✅ **Repository Secrets** - Manage encrypted secrets
-- ✅ **Issues/PRs** - Create and track automatically
+| Integration | Auto-Setup? | What Bot Can Do |
+|-------------|-------------|-----------------|
+| Claw Control (fork) | ✅ Yes | Fork repo to user's GitHub automatically |
+| GitHub Webhooks | ✅ Yes | Configure webhooks for repos |
+| GitHub Actions | ✅ Yes | Enable/configure CI/CD workflows |
+| Repository Secrets | ✅ Yes | Manage encrypted secrets via API |
+| Issues/PRs | ✅ Yes | Create, manage, and track automatically |
 
 **The Three Automation Tiers:**
 
-**Automation Tiers:**
-- 🥉 **Basic** (no tokens) - I guide you step-by-step manually
-- 🥈 **GitHub API** (PAT only) - Automate all GitHub operations
-- 🥇 **Full Automation** (Browser + GitHub) - Automate OAuth flows too
+| Tier | Requirements | What Bot Can Do |
+|------|--------------|-----------------|
+| 🥉 Basic | Nothing | Guide user step-by-step manually |
+| 🥈 GitHub API | GitHub PAT | Automate all GitHub operations |
+| 🥇 **Full VIP** | Browser + GitHub Login | **Automate EVERYTHING** via OAuth |
 
 **To unlock full automation:**
 1. User attaches Chrome extension (click OpenClaw toolbar icon, badge shows "ON")
@@ -500,11 +505,34 @@ With browser access + the user logged into GitHub, the bot can **automatically s
 2. ✅ Auto-retrieve API keys by navigating to dashboards
 3. ✅ Auto-configure all integrations end-to-end
 4. ✅ Connect services together (GitHub ↔ Railway ↔ Supermemory)
-5. ✅ Handle complex setup flows automatically (once browser configured)
+5. ✅ Handle the ENTIRE setup with zero manual steps
 
 ---
 
-### Step 6: Memory Enhancement (Optional but Awesome!)
+### Step 6: Enable Session Memory Hook (Quick Win!)
+
+Ask: **"Let me enable automatic session memory saving..."**
+
+```bash
+openclaw hooks enable session-memory
+```
+
+**What this does:**
+- Automatically saves conversation context to `memory/` when you use `/new`
+- Creates dated memory files like `2026-02-06-project-discussion.md`
+- Preserves important decisions and context between sessions
+- Zero effort - just works in the background!
+
+**Verify it's enabled:**
+```bash
+openclaw hooks list
+```
+
+You should see `💾 session-memory` with a checkmark.
+
+---
+
+### Step 7: Memory Enhancement (Optional but Awesome!)
 
 Ask: **"Want to supercharge my memory? I have two optional upgrades that make me way more helpful:"**
 
@@ -620,9 +648,10 @@ qmd search "your search query"
 
 **The bottom line:**
 
-**Memory Feature Comparison:**
-- **Supermemory:** Without it I forget everything between sessions. With it, I remember your preferences, decisions, and context!
-- **QMD:** Without it I can only search the web. With it, I can search YOUR personal knowledge base!
+| Feature | Without | With |
+|---------|---------|------|
+| Supermemory | I forget everything between sessions | I remember your preferences, decisions, and context |
+| QMD | I can only search the web | I can search YOUR personal knowledge base |
 
 Both are optional, but they make me significantly more useful. Set them up when you're ready - we can always add them later!
 
@@ -871,6 +900,7 @@ Team: {{AGENT_LIST}}
 
 ✅ Task management configured
 ✅ Agent behavior updated
+✅ Session memory hook enabled - conversations auto-save!
 {{#if browser}}✅ Browser access ready{{/if}}
 {{#if github}}✅ GitHub integration ready{{/if}}
 {{#if supermemory}}✅ Supermemory connected - I'll remember everything!{{/if}}

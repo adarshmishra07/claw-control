@@ -509,7 +509,30 @@ With browser access + the user logged into GitHub, the bot can **automatically s
 
 ---
 
-### Step 6: Memory Enhancement (Optional but Awesome!)
+### Step 6: Enable Session Memory Hook (Quick Win!)
+
+Ask: **"Let me enable automatic session memory saving..."**
+
+```bash
+openclaw hooks enable session-memory
+```
+
+**What this does:**
+- Automatically saves conversation context to `memory/` when you use `/new`
+- Creates dated memory files like `2026-02-06-project-discussion.md`
+- Preserves important decisions and context between sessions
+- Zero effort - just works in the background!
+
+**Verify it's enabled:**
+```bash
+openclaw hooks list
+```
+
+You should see `💾 session-memory` with a checkmark.
+
+---
+
+### Step 7: Memory Enhancement (Optional but Awesome!)
 
 Ask: **"Want to supercharge my memory? I have two optional upgrades that make me way more helpful:"**
 
@@ -877,6 +900,7 @@ Team: {{AGENT_LIST}}
 
 ✅ Task management configured
 ✅ Agent behavior updated
+✅ Session memory hook enabled - conversations auto-save!
 {{#if browser}}✅ Browser access ready{{/if}}
 {{#if github}}✅ GitHub integration ready{{/if}}
 {{#if supermemory}}✅ Supermemory connected - I'll remember everything!{{/if}}
