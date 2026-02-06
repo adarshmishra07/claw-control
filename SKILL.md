@@ -769,7 +769,7 @@ Do NOT proceed alone—violate this and the task fails.
 ```
 
 **Agent-Specific Adaptations:**
-- **{{COORDINATOR}} (Coordinator):** Delegates ALL work, never executes
+- **{{COORDINATOR}} (Coordinator):** Delegates ALL work, never executes. **ENFORCES team rules** — if any agent acts solo, pause and remind them to delegate/query/verify.
 - **{{BACKEND}} (Backend):** May query {{ARCHITECTURE}} for design, {{RESEARCH}} for research
 - **{{DEVOPS}} (DevOps):** May query {{BACKEND}} for API contracts, {{DEPLOYMENT}} for timing
 - **{{RESEARCH}} (Research):** May query {{ARCHITECTURE}} for strategic context
